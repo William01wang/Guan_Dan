@@ -1,0 +1,88 @@
+ManifestFileVersion: 0
+UnityVersion: 6000.0.26f1
+CRC: 470988546
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: 5f5285f9e520cf7362001a770cb905d0
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: 3219c50854ff2a782d7e36576b5dbf5b
+  IncrementalBuildHash:
+    serializedVersion: 2
+    Hash: aa30f6a07bdd13d7f9b645b34254754a
+HashAppended: 0
+ClassTypes:
+- Class: 1
+  Script: {instanceID: 0}
+- Class: 4
+  Script: {instanceID: 0}
+- Class: 21
+  Script: {instanceID: 0}
+- Class: 23
+  Script: {instanceID: 0}
+- Class: 28
+  Script: {instanceID: 0}
+- Class: 33
+  Script: {instanceID: 0}
+- Class: 43
+  Script: {instanceID: 0}
+- Class: 48
+  Script: {instanceID: 0}
+SerializeReferenceClassIdentifiers: []
+Assets:
+- Assets/SubstanceAssets/LittleGamesPack/Models/Cards/Card_ClubJack.fbx
+- Assets/SubstanceAssets/LittleGamesPack/Models/Cards/Card_SpadeKing.fbx
+- Assets/SubstanceAssets/LittleGamesPack/Models/Cards/Card_Spade5.fbx
+- Assets/SubstanceAssets/LittleGamesPack/Models/Cards/Card_Club10.fbx
+- Assets/SubstanceAssets/LittleGamesPack/Models/Cards/Card_Club3.fbx
+- Assets/SubstanceAssets/LittleGamesPack/Models/Cards/Card_Heart4.fbx
+- Assets/SubstanceAssets/LittleGamesPack/Models/Cards/Card_xBigJoker.fbx
+- Assets/SubstanceAssets/LittleGamesPack/Models/Cards/Card_ClubKing.fbx
+- Assets/SubstanceAssets/LittleGamesPack/Models/Cards/Card_SpadeJack.fbx
+- Assets/SubstanceAssets/LittleGamesPack/Models/Cards/Card_xLittleJoker.fbx
+- Assets/SubstanceAssets/LittleGamesPack/Models/Cards/Card_Diamond3.fbx
+- Assets/SubstanceAssets/LittleGamesPack/Models/Cards/Card_Diamond4.fbx
+- Assets/SubstanceAssets/LittleGamesPack/Models/Cards/Card_Spade7.fbx
+- Assets/SubstanceAssets/LittleGamesPack/Models/Cards/Card_HeartKing.fbx
+- Assets/SubstanceAssets/LittleGamesPack/Models/Cards/Card_Club2.fbx
+- Assets/SubstanceAssets/LittleGamesPack/Models/Cards/Card_Spade3.fbx
+- Assets/SubstanceAssets/LittleGamesPack/Models/Cards/Card_Diamond10.fbx
+- Assets/SubstanceAssets/LittleGamesPack/Models/Cards/Card_HeartAce.fbx
+- Assets/SubstanceAssets/LittleGamesPack/Models/Cards/Card_SpadeAce.fbx
+- Assets/SubstanceAssets/LittleGamesPack/Models/Cards/Card_Heart5.fbx
+- Assets/SubstanceAssets/LittleGamesPack/Models/Cards/Card_Heart10.fbx
+- Assets/SubstanceAssets/LittleGamesPack/Models/Cards/Card_Spade9.fbx
+- Assets/SubstanceAssets/LittleGamesPack/Models/Cards/Card_HeartJack.fbx
+- Assets/SubstanceAssets/LittleGamesPack/Models/Cards/Card_Club5.fbx
+- Assets/SubstanceAssets/LittleGamesPack/Models/Cards/Card_Club8.fbx
+- Assets/SubstanceAssets/LittleGamesPack/Models/Cards/Card_Spade2.fbx
+- Assets/SubstanceAssets/LittleGamesPack/Models/Cards/Card_HeartQueen.fbx
+- Assets/SubstanceAssets/LittleGamesPack/Models/Cards/Card_Spade4.fbx
+- Assets/SubstanceAssets/LittleGamesPack/Models/Cards/Card_DiamondAce.fbx
+- Assets/SubstanceAssets/LittleGamesPack/Models/Cards/Card_Spade6.fbx
+- Assets/SubstanceAssets/LittleGamesPack/Models/Cards/Card_Spade10.fbx
+- Assets/SubstanceAssets/LittleGamesPack/Models/Cards/Card_Club4.fbx
+- Assets/SubstanceAssets/LittleGamesPack/Models/Cards/Card_ClubQueen.fbx
+- Assets/SubstanceAssets/LittleGamesPack/Models/Cards/Card_DiamondQueen.fbx
+- Assets/SubstanceAssets/LittleGamesPack/Models/Cards/Card_Diamond7.fbx
+- Assets/SubstanceAssets/LittleGamesPack/Models/Cards/Card_Heart6.fbx
+- Assets/SubstanceAssets/LittleGamesPack/Models/Cards/Card_Spade8.fbx
+- Assets/SubstanceAssets/LittleGamesPack/Models/Cards/Card_SpadeQueen.fbx
+- Assets/SubstanceAssets/LittleGamesPack/Models/Cards/Card_ClubAce.fbx
+- Assets/SubstanceAssets/LittleGamesPack/Models/Cards/Card_Heart3.fbx
+- Assets/SubstanceAssets/LittleGamesPack/Models/Cards/Card_Diamond8.fbx
+- Assets/SubstanceAssets/LittleGamesPack/Models/Cards/Card_DiamondKing.fbx
+- Assets/SubstanceAssets/LittleGamesPack/Models/Cards/Card_Club9.fbx
+- Assets/SubstanceAssets/LittleGamesPack/Models/Cards/Card_Diamond2.fbx
+- Assets/SubstanceAssets/LittleGamesPack/Models/Cards/Card_Heart2.fbx
+- Assets/SubstanceAssets/LittleGamesPack/Models/Cards/Card_Club7.fbx
+- Assets/SubstanceAssets/LittleGamesPack/Models/Cards/Card_Diamond5.fbx
+- Assets/SubstanceAssets/LittleGamesPack/Models/Cards/Card_DiamondJack.fbx
+- Assets/SubstanceAssets/LittleGamesPack/Models/Cards/Card_Heart7.fbx
+- Assets/SubstanceAssets/LittleGamesPack/Models/Cards/Card_Heart9.fbx
+- Assets/SubstanceAssets/LittleGamesPack/Models/Cards/Card_Diamond6.fbx
+- Assets/SubstanceAssets/LittleGamesPack/Models/Cards/Card_Diamond9.fbx
+- Assets/SubstanceAssets/LittleGamesPack/Models/Cards/Card_Club6.fbx
+- Assets/SubstanceAssets/LittleGamesPack/Models/Cards/Card_Heart8.fbx
+Dependencies: []
