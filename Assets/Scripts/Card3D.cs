@@ -1,31 +1,45 @@
 using UnityEngine;
 
-public class Card : MonoBehaviour
+public class Card3D : MonoBehaviour
 {
     private enum CardState
     {
         OnHand,
         Selected,
         OnTable,
-        OnHeap
+        OnOthers
     }
     private CardState state;
     private Renderer object_renderer;
-    public Color original_color;
+    private Color original_color;
     void Start()
     {
-        // Get the Renderer component of the object this script is attached to
+        Debug.Log("Card created");
         object_renderer = GetComponent<Renderer>();
-
-        // Store the original material of the object
         original_color = object_renderer.material.color;
+    }
 
-        state = CardState.OnHand;
+    public void SetState(string state_string){
+        // Debug.Log(state_string);
+        if (state_string == "OnHand"){
+            this.state = CardState.OnHand;
+        }
+        else if (state_string == "Selected"){
+            this.state = CardState.Selected;
+        }
+        else if (state_string == "OnTable"){
+            this.state = CardState.OnTable;
+        }
+        else if (state_string == "OnOthers"){
+            this.state = CardState.OnOthers;
+        }
+        else{
+            Debug.LogError($"Card3D state {state_string} undefined");
+        }
     }
 
     void Update()
     {
-        // Create a ray from the camera through the mouse position
         if (Camera.main == null)
         {
             Debug.LogError("Camera.main == null");
