@@ -6,6 +6,7 @@ public class CardSet3D : MonoBehaviour
 {
     private AssetBundle asset_bundle;
     private List<string> full_cardname;
+    public float card_ontable_height = 0;
 
     void Start()
     {
@@ -47,10 +48,10 @@ public class CardSet3D : MonoBehaviour
                 string selected_cardname = full_cardname[random.Next(full_cardname.Count)];
                 GameObject card = AddCard(selected_cardname, new Vector3(0f, 0f, 0f), Quaternion.identity, child.transform);
                 if (playername == "Player"){
-                    card.GetComponent<Card3D>().SetState("OnHand");
+                    card.GetComponent<Card3D>().state = Card3D.CardState.OnHand;
                 }
                 else{
-                    card.GetComponent<Card3D>().SetState("OnOthers");
+                    card.GetComponent<Card3D>().state = Card3D.CardState.OnOthers;
                 }
             }
             child.GetComponent<Player3D>().OrgHands();
