@@ -7,6 +7,15 @@ public class CardSet3D : MonoBehaviour
     private AssetBundle asset_bundle;
     private List<string> full_cardname;
     public float card_ontable_height = 0;
+    public int whos_turn = 0;
+    public Dictionary<string, int> player_rank = new Dictionary<string, int>
+        {
+            { "Player", 0 },
+            { "PlayerLeft", 0 },
+            { "PlayerRight", 0 },
+            { "PlayerBack", 0 },
+        };
+    public int n_finished_player = 0;
 
     void Start()
     {
@@ -18,12 +27,14 @@ public class CardSet3D : MonoBehaviour
         full_cardname = new List<string>();
         full_cardname.Add("xLittleJoker");
         full_cardname.Add("xBigJoker");
-        foreach (string suit in new string[] { "Club", "Diamond", "Heart", "Spade" }){
+        foreach (string suit in new string[] { "Club", "Diamond", "Heart", "Spade" })
+        {
             full_cardname.Add($"{suit}Ace");
             full_cardname.Add($"{suit}Jack");
             full_cardname.Add($"{suit}King");
             full_cardname.Add($"{suit}Queen");
-            for (int i = 2; i <= 10; i++){
+            for (int i = 2; i <= 10; i++)
+            {
                 full_cardname.Add($"{suit}{i}");
             }
         }
@@ -37,33 +48,33 @@ public class CardSet3D : MonoBehaviour
 
     void Update()
     {
-
-    }
-
-    void DistributeCards(){  
-        System.Random random = new System.Random();
-        foreach (string playername in new string[] {"Player", "PlayerLeft", "PlayerRight", "PlayerBack"}){
-            Transform child = transform.Find(playername);
-            for (int i = 0; i < 27; i++){
-                string selected_cardname = full_cardname[random.Next(full_cardname.Count)];
-                GameObject card = AddCard(selected_cardname, new Vector3(0f, 0f, 0f), Quaternion.identity, child.transform);
-                if (playername == "Player"){
-                    card.GetComponent<Card3D>().state = Card3D.CardState.OnHand;
-                }
-                else{
-                    card.GetComponent<Card3D>().state = Card3D.CardState.OnOthers;
-                }
-            }
-            child.GetComponent<Player3D>().OrgHands();
+        if (n_finished_player >= 4)
+        {
+            DistributeCards();
         }
     }
 
-    GameObject AddCard(string cardname, Vector3 card_location, Quaternion card_rotation, Transform transform){
-        GameObject card = Instantiate(asset_bundle.LoadAsset<GameObject>($"Card_{cardname}"), card_location, card_rotation, transform);
-        BoxCollider boxCollider = card.AddComponent<BoxCollider>();
-        boxCollider.size = new Vector3(0.13f, 0.19f, 0.01f);
-        card.AddComponent<Card3D>();
-        return card;
+    void DistributeCards()
+    {
+        System.Random random = new System.Random();
+        foreach (string playername in new string[] { "Player", "PlayerLeft", "PlayerRight", "PlayerBack" })
+        {
+            Transform child = transform.Find(playername);
+            foreach (Transform card in child.transform)
+            {
+                Destroy(card.gameObject);
+            }
+            for (int i = 0; i < 27; i++)
+            {
+                string selected_cardname = full_cardname[random.Next(full_cardname.Count)];
+                child.GetComponent<Player3D>().AddCard(asset_bundle.LoadAsset<GameObject>($"Card_{selected_cardname}"), selected_cardname);
+            }
+            child.GetComponent<Player3D>().OrgHands();
+
+            player_rank[playername] = 0;
+        }
+        n_finished_player = 0;
+        whos_turn = 0;
     }
 }
 

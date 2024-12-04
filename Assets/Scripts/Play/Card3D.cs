@@ -10,6 +10,7 @@ public class Card3D : MonoBehaviour
         OnOthers
     }
     public CardState state;
+    public string card_name;
     private Renderer object_renderer;
     private Color original_color;
     private Vector3? mouse_down_position = null;
@@ -112,7 +113,7 @@ public class Card3D : MonoBehaviour
                 Vector3 d_mouse_position = Input.mousePosition - mouse_down_position.Value;
                 if (d_mouse_position.y > 0 && d_mouse_position.magnitude > 10 && Mathf.Abs(d_mouse_position.x) < d_mouse_position.y)
                 {
-                    GetComponentInParent<Player3D>().let_me_play = true;
+                    GetComponentInParent<Player3D>().operate_play = true;
                 }
                 else
                 {
