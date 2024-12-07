@@ -15,6 +15,13 @@ public class CardSet3D : MonoBehaviour //控制牌局进行的全局类
             { "PlayerRight", 0 },
             { "PlayerBack", 0 },
         };
+    public Dictionary<string, string> card_on_deck = new Dictionary<string, string>
+        {
+            { "Player", "" },
+            { "PlayerLeft", "" },
+            { "PlayerRight", "" },
+            { "PlayerBack", "" },
+        };
     public int n_finished_player = 0;
 
     void Start()
@@ -63,10 +70,6 @@ public class CardSet3D : MonoBehaviour //控制牌局进行的全局类
         }
         int index = -1;
         Transform[] child_Players = new Transform[] { transform.Find("Player"), transform.Find("PlayerLeft"), transform.Find("PlayerRight"), transform.Find("PlayerBack") };
-        Transform child_Player = transform.Find("Player");
-        Transform child_PlayerL = transform.Find("PlayerLeft");
-        Transform child_PlayerR = transform.Find("PlayerRight");
-        Transform child_PlayerB = transform.Find("PlayerBack");
         for (int i = 2; i <= 10; i++)//2-10
         {
             foreach (string suit in new string[] { "Club", "Diamond", "Heart", "Spade" })
@@ -106,15 +109,6 @@ public class CardSet3D : MonoBehaviour //控制牌局进行的全局类
         n_finished_player = 0;
         whos_turn = 0;
     }
-
-    /*GameObject AddCard(string suit, string cardname, Vector3 card_location, Quaternion card_rotation, Transform transform){
-        GameObject card = Instantiate(asset_bundle.LoadAsset<GameObject>($"Card_{suit}{cardname}"), card_location, card_rotation, transform);
-        BoxCollider boxCollider = card.AddComponent<BoxCollider>();
-        boxCollider.size = new Vector3(0.13f, 0.19f, 0.01f);
-        card.AddComponent<Card3D>();
-        card.GetComponent<Card3D>().cardname = $"{suit}{cardname}";
-        return card;
-    }*/
 
     int getRandom(int[] random_set, System.Random random, int curLen) 
     {
