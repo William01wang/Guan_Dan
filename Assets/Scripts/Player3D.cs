@@ -1,5 +1,6 @@
 using UnityEngine;
 using System.Collections.Generic;
+using System.Text.RegularExpressions;
 
 public class Player3D : MonoBehaviour
 {
@@ -9,6 +10,9 @@ public class Player3D : MonoBehaviour
 
     void Start()
     {
+        gameObject.AddComponent<Computer>();
+        gameObject.AddComponent<Computer>();
+        gameObject.AddComponent<Computer>();
     }
 
     public void SetDirection(Quaternion direction)
@@ -122,43 +126,90 @@ public class Player3D : MonoBehaviour
         }
         else
         {
-            List<string> play_cardnames = new List<string>();
-            while (play_cardnames.Count <= 0)
+            string output = "";
+            switch (GetComponentInParent<CardSet3D>().whos_turn) 
             {
-                foreach (Transform child in transform)
-                {
-                    if (child.GetComponent<Card3D>().state == Card3D.CardState.OnOthers && Random.Range(0f, 1f) < 0.2f)
-                    {
-                        play_cardnames.Add(child.GetComponent<Card3D>().cardname);
-                    }
-                }
-
+                case 1:
+                    output = GetComponentInParent<CardSet3D>().computerRight.findPlayableCards(GetComponentInParent<CardSet3D>().card_on_deck);
+                    break;
+                case 2:
+                    output = GetComponentInParent<CardSet3D>().computerBack.findPlayableCards(GetComponentInParent<CardSet3D>().card_on_deck);
+                    break;
+                case 3:
+                    output = GetComponentInParent<CardSet3D>().computerLeft.findPlayableCards(GetComponentInParent<CardSet3D>().card_on_deck);
+                    break;
             }
-            int iter = play_cardnames.Count;
-            while (play_cardnames.Count > 0)
+        if (!output.Equals("")) 
+        {
+            int[] output_split_int = new int[3];
+            string[] output_split = output.Split('-');
+            for (int i = 0; i < output_split.Length; i++)
             {
-                foreach (Transform child in transform)
-                {
-                    if (child.GetComponent<Card3D>().state == Card3D.CardState.OnOthers && child.GetComponent<Card3D>().cardname == play_cardnames[0])
+                output_split_int[i] = int.Parse(output_split[i]);
+            }
+            switch (output_split_int[0]) 
+            {
+                case 1:
+                    UpdateCardStatus(output_split_int[1]);
+                    break;
+                case 2:
+                    for (int i = 0; i < 2; i++) 
                     {
-                        if (PlayCardAction(child))
+                        UpdateCardStatus(output_split_int[1]);
+                    }
+                    break;
+                case 3:
+                    for (int i = 0; i < 3; i++)
+                    {
+                        UpdateCardStatus(output_split_int[1]);
+                    }
+                    break;
+                case 4:
+                    for (int i = 0; i < 5; i++)
+                    {
+                        UpdateCardStatus(output_split_int[1]+i);
+                    }
+                    break;
+                case 5:
+                    for (int i = 0; i < 3; i++)
+                    {
+                        UpdateCardStatus(output_split_int[1]);
+                    }
+                    for (int i = 0; i < 2; i++)
+                    {
+                        UpdateCardStatus(output_split_int[2]);
+                    }
+                    break;
+                case 6:
+                    for (int i = 0; i < 3; i++)
+                    {
+                        for (int j = 0; j < 2; i++)
                         {
-                            card_cnt--;
-                            play_cardnames.RemoveAt(0);
-                            break;
+                            UpdateCardStatus(output_split_int[1] + i);
                         }
                     }
-                }
-                iter--;
-                if (iter < 0)
-                {
-                    Debug.LogError($"play_cardnames incomplete {play_cardnames}");
                     break;
-                }
+                case 7:
+                    for (int i = 0; i < 2; i++)
+                    {
+                        for (int j = 0; j < 3; i++)
+                        {
+                            UpdateCardStatus(output_split_int[1] + i);
+                        }
+                    }
+                    break;
+                case 8:
+                    for (int i = 0; i < output_split_int[1]; i++)
+                    {
+                        UpdateCardStatus(output_split_int[2]);
+                    }
+                    break;
+                
             }
         }
-        if (card_cnt_before > card_cnt)
-        {
+            
+        }
+
             if (card_cnt <= 0)
             {
                 GetComponentInParent<CardSet3D>().n_finished_player++;
@@ -166,7 +217,7 @@ public class Player3D : MonoBehaviour
             }
             OrgHands();
             NextTrun();
-        }
+        
     }
 
     public string CheckHandType()
@@ -286,11 +337,11 @@ public class Player3D : MonoBehaviour
             {
                 if (count1 == 3)
                 {
-                    return $"5-{point1}";
+                    return $"5-{point1}-{point2}";
                 }
                 else
                 {
-                    return $"5-{point2}";
+                    return $"5-{point2}-{point1}";
                 }
             }
         }
@@ -371,11 +422,114 @@ public class Player3D : MonoBehaviour
     //对子："2-牌点"
     //三同张："3-牌点"
     //顺子："4-最小牌牌点"
-    //三带对："5-三的牌点"
+    //三带对："5-三的牌点-二的牌点"
     //三连对："6-最小牌牌点"
     //三同连张："7-最小牌牌点"
     //炸弹："8-炸弹长度-牌点" 其中四大天王长度视为11，牌点设为16
     //同花顺："9-牌点"
+
+    void UpdateCardStatus(int point) 
+    {
+        if (point <= 10)
+        {
+            foreach (Transform child in transform)
+            {
+                if (child.GetComponent<Card3D>().state == Card3D.CardState.OnOthers && Regex.IsMatch(child.GetComponent<Card3D>().cardname, $"{point}"))
+                {
+                    if (PlayCardAction(child))
+                    {
+                        card_cnt--;
+                        break;
+                    }
+                }
+            }
+        }
+        else if (point == 11) 
+        {
+            foreach (Transform child in transform)
+            {
+                if (child.GetComponent<Card3D>().state == Card3D.CardState.OnOthers && Regex.IsMatch(child.GetComponent<Card3D>().cardname, $"Jack"))
+                {
+                    if (PlayCardAction(child))
+                    {
+                        card_cnt--;
+                        break;
+                    }
+                }
+            }
+        }
+        else if (point == 12)
+        {
+            foreach (Transform child in transform)
+            {
+                if (child.GetComponent<Card3D>().state == Card3D.CardState.OnOthers && Regex.IsMatch(child.GetComponent<Card3D>().cardname, $"Queen"))
+                {
+                    if (PlayCardAction(child))
+                    {
+                        card_cnt--;
+                        break;
+                    }
+                }
+            }
+        }
+        else if (point == 13)
+        {
+            foreach (Transform child in transform)
+            {
+                if (child.GetComponent<Card3D>().state == Card3D.CardState.OnOthers && Regex.IsMatch(child.GetComponent<Card3D>().cardname, $"King"))
+                {
+                    if (PlayCardAction(child))
+                    {
+                        card_cnt--;
+                        break;
+                    }
+                }
+            }
+        }
+        else if (point == 14)
+        {
+            foreach (Transform child in transform)
+            {
+                if (child.GetComponent<Card3D>().state == Card3D.CardState.OnOthers && Regex.IsMatch(child.GetComponent<Card3D>().cardname, $"Ace"))
+                {
+                    if (PlayCardAction(child))
+                    {
+                        card_cnt--;
+                        break;
+                    }
+                }
+            }
+        }
+        else if (point == 16)
+        {
+            foreach (Transform child in transform)
+            {
+                if (child.GetComponent<Card3D>().state == Card3D.CardState.OnOthers && Regex.IsMatch(child.GetComponent<Card3D>().cardname, $"LittleJoker"))
+                {
+                    if (PlayCardAction(child))
+                    {
+                        card_cnt--;
+                        break;
+                    }
+                }
+            }
+        }
+        else if (point == 17)
+        {
+            foreach (Transform child in transform)
+            {
+                if (child.GetComponent<Card3D>().state == Card3D.CardState.OnOthers && Regex.IsMatch(child.GetComponent<Card3D>().cardname, $"BigJoker"))
+                {
+                    if (PlayCardAction(child))
+                    {
+                        card_cnt--;
+                        break;
+                    }
+                }
+            }
+        }
+    }
+
 
     void Update()
     {

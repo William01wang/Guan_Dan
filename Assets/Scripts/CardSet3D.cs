@@ -24,6 +24,10 @@ public class CardSet3D : MonoBehaviour //控制牌局进行的全局类
         };
     public int n_finished_player = 0;
 
+    public Computer computerLeft;
+    public Computer computerRight;
+    public Computer computerBack;
+
     void Start()
     {
         asset_bundle = AssetBundle.LoadFromFile("Assets/AssetBundles/cards");
@@ -49,6 +53,12 @@ public class CardSet3D : MonoBehaviour //控制牌局进行的全局类
         transform.Find("PlayerBack").GetComponent<Player3D>().SetDirection(Quaternion.Euler(0f, 180f, 0f));
 
         DistributeCards();
+        computerLeft = gameObject.AddComponent<Computer>();
+        computerRight = gameObject.AddComponent<Computer>();
+        computerBack = gameObject.AddComponent<Computer>();
+        computerLeft.BuildHandCards(transform.Find("PlayerLeft").GetComponent<Player3D>());
+        computerRight.BuildHandCards(transform.Find("PlayerRight").GetComponent<Player3D>());
+        computerBack.BuildHandCards(transform.Find("PlayerBack").GetComponent<Player3D>());
     }
 
     void Update()
@@ -56,6 +66,9 @@ public class CardSet3D : MonoBehaviour //控制牌局进行的全局类
         if (n_finished_player >= 4)
         {
             DistributeCards();
+            computerLeft = gameObject.AddComponent<Computer>();
+            computerRight = gameObject.AddComponent<Computer>();
+            computerBack = gameObject.AddComponent<Computer>();
         }
     }
 
@@ -117,5 +130,123 @@ public class CardSet3D : MonoBehaviour //控制牌局进行的全局类
         random_set[index] = random_set[curLen-1];
         return result / 27;
     }
+
+    public static string GetBestCardOnDeck(Dictionary<string, string> card_on_deck) 
+    {
+        string best_key = null;
+        string best_value = "";
+        foreach (var item in card_on_deck)
+        {
+            Debug.Log(item.Key + item.Value);
+            if (item.Value == "") //跳过没出牌的玩家
+            {
+                continue;
+            }
+            if (best_value.Equals(""))//初始化
+            {
+                best_key = item.Key;
+                best_value = item.Value;
+            }
+            else
+            {
+                if (CardSet3D.CompareCard(item.Value, best_value) == 1)
+                {
+                    best_key = item.Key;
+                    best_value = item.Value;
+                }
+            }
+        }
+        return best_value;
+    }
+
+    public void UpdateCardOnDeck(string new_value) 
+    {
+        switch (whos_turn) 
+        {
+            case 0:
+                card_on_deck["Player"] = new_value; break;
+            case 1:
+                card_on_deck["PlayerRight"] = new_value; break;
+            case 2:
+                card_on_deck["PlayerBack"] = new_value; break;
+            case 3:
+                card_on_deck["PlayerLeft"] = new_value; break;
+        }
+    }
+
+
+    public static int CompareCard(string card1, string card2) 
+    {
+        //一个静态public函数，用于牌局中所有类需要的牌大小比较
+        //返回值: 1:card1更大 0:card2更大或相同! -1:不可比较
+        if (card1.Equals(""))
+        {
+            return 0;
+        }
+        if (card2.Equals(""))
+        {
+            return 1;
+        }
+        int[] v1 = new int[3];
+        int[] v2 = new int[3];
+        string[] v1_string = card1.Split("-");
+        string[] v2_string = card2.Split("-");
+        for (int i = 0; i < v1_string.Length; i++) 
+        {
+            v1[i] = int.Parse(v1_string[i]);
+        }
+        for (int i = 0; i < v2_string.Length; i++)
+        {
+            v2[i] = int.Parse(v2_string[i]);
+        }
+        if (v1[0] > v2[0]) //v1牌型编号更大(不同牌型)
+        {
+            if (v1[0] < 8) //v1不是炸弹类，则二者不可比较
+            {
+                return -1;
+            }
+            else if (v1[0] == 9)//v1是同花顺，属于特况，要考虑v2若是炸弹长度是否>5
+            {
+                if (v2[0] == 8 && v2[1] > 5)
+                {
+                    return 0;
+                }
+            }
+            return 1;
+        }
+        else if (v1[0] < v2[0]) //v2牌型编号更大(不同牌型)
+        {
+            if (v2[0] < 8) //v2不是炸弹类，则二者不可比较
+            {
+                return -1;
+            }
+            else if (v2[0] == 9)//v2是同花顺，属于特况，要考虑v1若是炸弹长度是否>5
+            {
+                if (v1[0] == 8 && v1[1] > 5)
+                {
+                    return 1;
+                }
+            }
+            return 0;
+        }
+        else //同牌型
+        {
+            if (v1[0] == 8) //若是炸弹，先看长度再看牌点
+            {
+                if (v1[1] == v2[1]) //同长度
+                {
+                    return v1[2] > v2[2] ? 1 : 0;// 比牌点
+                }
+                else
+                {
+                    return v1[1] > v2[1] ? 1 : 0;// 比长度
+                }
+            }
+            else //其他牌型直接比牌点
+            {
+                return v1[1] > v2[1] ? 1 : 0;
+            }
+        }
+    } 
 }
 
