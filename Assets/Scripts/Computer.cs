@@ -8,13 +8,14 @@ using UnityEngine.InputSystem;
 //目前简单人机的思路是在游戏开始时把拥有手牌遍历一次，生成手牌库。之后每次出牌只在可打牌型中选择可打的最小牌。遍历手牌库时生成一个(牌点，数量)的字典，代表
 public class Computer : MonoBehaviour
 {
-    Dictionary<int, int> handCards = new Dictionary<int, int>();//手牌
+    Dictionary<int, int> handCards;//手牌
 
     void Start()
     {
     }
     public void BuildHandCards(Player3D player) //生成手牌
     {
+        handCards = new Dictionary<int, int>();
         for (int i = 1; i <= 17; i++) //初始化
         {
             handCards.Add(i, 0);
@@ -59,19 +60,15 @@ public class Computer : MonoBehaviour
         }
     }
 
-    public string findPlayableCards(Dictionary<string, string> card_on_deck) //根据本轮牌桌上的牌，寻找可打出的最小牌型
+    public string findPlayableCards(CardSet3D cardSet) //根据本轮牌桌上的牌，寻找可打出的最小牌型
     {
         string result = "";
-        string best_value = CardSet3D.GetBestCardOnDeck(card_on_deck);
+        string best_value = cardSet.GetBestCardOnDeck();
         if (best_value.Equals("")) //若没人出过牌，直接打最小的牌型
         {
             if (result == "") 
             {
                 result = Search_Triple_With_Row(0);
-            }
-            if (result == "")
-            {
-                result = Search_Three_pairs(0);
             }
             if (result == "")
             {
@@ -127,10 +124,10 @@ public class Computer : MonoBehaviour
                             result = Search_Straight(best_value_int[1]);
                             break;
                         case 5:
-                            result = Search_Triple_Pairs(best_value_int[1]);
+                            result = Search_Three_pairs(best_value_int[1]);
                             break;
                         case 6:
-                            result = Search_Three_pairs(best_value_int[1]);
+                            result = Search_Triple_Pairs(best_value_int[1]);
                             break;
                         case 7:
                             result = Search_Triple_With_Row(best_value_int[1]);
@@ -301,14 +298,14 @@ public class Computer : MonoBehaviour
     {
         string result = "";
         int result_i = -1;
-        for (int i = 1; i <= handCards.Count; i++)
+        for (int i = 1; i <= 15; i++)
         {
             if (handCards[i] >= len) 
             {
                 if (i > point) //长度相同点数更大，一定是最优解
                 {
                     handCards[i] -= len;
-                    return $"8-{handCards[i]}-{i}";
+                    return $"8-{len}-{i}";
                 }
                 else if (handCards[i] > len) //点数不更大但长度更大，如果没找到上面的情况，那么第一个这种情况是最优解
                 {

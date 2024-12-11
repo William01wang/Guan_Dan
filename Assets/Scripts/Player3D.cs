@@ -1,6 +1,7 @@
 using UnityEngine;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
+using UnityEngine.Rendering.Universal;
 
 public class Player3D : MonoBehaviour
 {
@@ -10,9 +11,10 @@ public class Player3D : MonoBehaviour
 
     void Start()
     {
-        gameObject.AddComponent<Computer>();
-        gameObject.AddComponent<Computer>();
-        gameObject.AddComponent<Computer>();
+        if (gameObject.name != "Player") 
+        {
+            gameObject.AddComponent<Computer>();
+        }
     }
 
     public void SetDirection(Quaternion direction)
@@ -88,9 +90,34 @@ public class Player3D : MonoBehaviour
     private void NextTrun()
     {
         GetComponentInParent<CardSet3D>().whos_turn++;
-        if (GetComponentInParent<CardSet3D>().whos_turn >= 4)
+        switch (GetComponentInParent<CardSet3D>().whos_turn)
         {
-            GetComponentInParent<CardSet3D>().whos_turn = 0;
+            case 0:
+                GetComponentInParent<CardSet3D>().UpdateCardOnDeck("", "Player");
+                Debug.Log("Player's turn!");
+                break;
+            case 1:
+                GetComponentInParent<CardSet3D>().UpdateCardOnDeck("", "PlayerRight");
+                Debug.Log("PlayerRight's turn!");
+                break;
+            case 2:
+                GetComponentInParent<CardSet3D>().UpdateCardOnDeck("", "PlayerBack");
+                Debug.Log("PlayerBack's turn!");
+                break;
+            case 3:
+                GetComponentInParent<CardSet3D>().UpdateCardOnDeck("", "PlayerLeft");
+                Debug.Log("PlayerLeft's turn!");
+                break;
+            default:
+                GetComponentInParent<CardSet3D>().whos_turn = 0;
+                GetComponentInParent<CardSet3D>().UpdateCardOnDeck("", "Player");
+                Debug.Log("Player's turn!");
+                GetComponentInParent<CardSet3D>().playerUIPanel.setPanelActive(true);
+                foreach (string v in GetComponentInParent<CardSet3D>().card_on_deck.Values)
+                {
+                    Debug.Log(v);
+                }
+                break;
         }
     }
 
@@ -111,37 +138,35 @@ public class Player3D : MonoBehaviour
         }
         if (gameObject.name == "Player")
         {
-            if (!operate_play)
+            if (GetComponentInParent<CardSet3D>().playerUIPanel.btnPassClicked)
+            {
+                GetComponentInParent<CardSet3D>().playerUIPanel.btnPassClicked = false;
+            }
+            else if (!operate_play)
             {
                 return;
             }
-            operate_play = false;
-            foreach (Transform child in transform)
+            else 
             {
-                if (PlayCardAction(child))
+                operate_play = false;
+                foreach (Transform child in transform)
                 {
-                    card_cnt--;
+                    if (PlayCardAction(child))
+                    {
+                        card_cnt--;
+                    }
                 }
             }
+            
         }
         else
         {
             string output = "";
-            switch (GetComponentInParent<CardSet3D>().whos_turn) 
-            {
-                case 1:
-                    output = GetComponentInParent<CardSet3D>().computerRight.findPlayableCards(GetComponentInParent<CardSet3D>().card_on_deck);
-                    break;
-                case 2:
-                    output = GetComponentInParent<CardSet3D>().computerBack.findPlayableCards(GetComponentInParent<CardSet3D>().card_on_deck);
-                    break;
-                case 3:
-                    output = GetComponentInParent<CardSet3D>().computerLeft.findPlayableCards(GetComponentInParent<CardSet3D>().card_on_deck);
-                    break;
-            }
-        if (!output.Equals("")) 
+            output = gameObject.GetComponent<Computer>().findPlayableCards(GetComponentInParent<CardSet3D>());
+
+            if (!output.Equals("")) 
         {
-            int[] output_split_int = new int[3];
+                int[] output_split_int = new int[3];
             string[] output_split = output.Split('-');
             for (int i = 0; i < output_split.Length; i++)
             {
@@ -207,17 +232,17 @@ public class Player3D : MonoBehaviour
                 
             }
         }
-            
+            GetComponentInParent<CardSet3D>().UpdateCardOnDeck(output, gameObject.name);
+
         }
 
-            if (card_cnt <= 0)
-            {
-                GetComponentInParent<CardSet3D>().n_finished_player++;
-                GetComponentInParent<CardSet3D>().player_rank[gameObject.name] = GetComponentInParent<CardSet3D>().n_finished_player;
-            }
-            OrgHands();
-            NextTrun();
-        
+        if (card_cnt <= 0)
+        {
+            GetComponentInParent<CardSet3D>().n_finished_player++;
+            GetComponentInParent<CardSet3D>().player_rank[gameObject.name] = GetComponentInParent<CardSet3D>().n_finished_player;
+        }
+        OrgHands();
+        NextTrun();
     }
 
     public string CheckHandType()
@@ -428,6 +453,8 @@ public class Player3D : MonoBehaviour
     //炸弹："8-炸弹长度-牌点" 其中四大天王长度视为11，牌点设为16
     //同花顺："9-牌点"
 
+
+    //用于处理电脑玩家打出牌的动画
     void UpdateCardStatus(int point) 
     {
         if (point <= 10)

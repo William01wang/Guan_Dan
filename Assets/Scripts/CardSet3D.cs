@@ -1,13 +1,16 @@
 using UnityEngine;
 using System;
 using System.Collections.Generic;
+using Unity.VisualScripting;
 
 public class CardSet3D : MonoBehaviour //控制牌局进行的全局类
 {
     private AssetBundle asset_bundle;
     private List<string> full_cardname;
+    public PlayerUIPanel playerUIPanel;
     public float card_ontable_height = 0;
     public int whos_turn = 0;
+    
     public Dictionary<string, int> player_rank = new Dictionary<string, int>
         {
             { "Player", 0 },
@@ -24,9 +27,6 @@ public class CardSet3D : MonoBehaviour //控制牌局进行的全局类
         };
     public int n_finished_player = 0;
 
-    public Computer computerLeft;
-    public Computer computerRight;
-    public Computer computerBack;
 
     void Start()
     {
@@ -53,12 +53,13 @@ public class CardSet3D : MonoBehaviour //控制牌局进行的全局类
         transform.Find("PlayerBack").GetComponent<Player3D>().SetDirection(Quaternion.Euler(0f, 180f, 0f));
 
         DistributeCards();
-        computerLeft = gameObject.AddComponent<Computer>();
-        computerRight = gameObject.AddComponent<Computer>();
-        computerBack = gameObject.AddComponent<Computer>();
-        computerLeft.BuildHandCards(transform.Find("PlayerLeft").GetComponent<Player3D>());
-        computerRight.BuildHandCards(transform.Find("PlayerRight").GetComponent<Player3D>());
-        computerBack.BuildHandCards(transform.Find("PlayerBack").GetComponent<Player3D>());
+
+        transform.Find("PlayerLeft").GetComponent<Player3D>().GetComponent<Computer>().BuildHandCards(transform.Find("PlayerLeft").GetComponent<Player3D>());
+        transform.Find("PlayerRight").GetComponent<Player3D>().GetComponent<Computer>().BuildHandCards(transform.Find("PlayerRight").GetComponent<Player3D>());
+        transform.Find("PlayerBack").GetComponent<Player3D>().GetComponent<Computer>().BuildHandCards(transform.Find("PlayerBack").GetComponent<Player3D>());
+
+        GameObject temp = GameObject.Find("PlayerUIPanel");
+        playerUIPanel = temp.GetComponent<PlayerUIPanel>();
     }
 
     void Update()
@@ -66,9 +67,10 @@ public class CardSet3D : MonoBehaviour //控制牌局进行的全局类
         if (n_finished_player >= 4)
         {
             DistributeCards();
-            computerLeft = gameObject.AddComponent<Computer>();
-            computerRight = gameObject.AddComponent<Computer>();
-            computerBack = gameObject.AddComponent<Computer>();
+
+            transform.Find("PlayerLeft").GetComponent<Player3D>().GetComponent<Computer>().BuildHandCards(transform.Find("PlayerLeft").GetComponent<Player3D>());
+            transform.Find("PlayerRight").GetComponent<Player3D>().GetComponent<Computer>().BuildHandCards(transform.Find("PlayerRight").GetComponent<Player3D>());
+            transform.Find("PlayerBack").GetComponent<Player3D>().GetComponent<Computer>().BuildHandCards(transform.Find("PlayerBack").GetComponent<Player3D>());
         }
     }
 
@@ -131,13 +133,12 @@ public class CardSet3D : MonoBehaviour //控制牌局进行的全局类
         return result / 27;
     }
 
-    public static string GetBestCardOnDeck(Dictionary<string, string> card_on_deck) 
+    public string GetBestCardOnDeck() 
     {
         string best_key = null;
         string best_value = "";
         foreach (var item in card_on_deck)
         {
-            Debug.Log(item.Key + item.Value);
             if (item.Value == "") //跳过没出牌的玩家
             {
                 continue;
@@ -159,19 +160,9 @@ public class CardSet3D : MonoBehaviour //控制牌局进行的全局类
         return best_value;
     }
 
-    public void UpdateCardOnDeck(string new_value) 
+    public void UpdateCardOnDeck(string new_value, string player) 
     {
-        switch (whos_turn) 
-        {
-            case 0:
-                card_on_deck["Player"] = new_value; break;
-            case 1:
-                card_on_deck["PlayerRight"] = new_value; break;
-            case 2:
-                card_on_deck["PlayerBack"] = new_value; break;
-            case 3:
-                card_on_deck["PlayerLeft"] = new_value; break;
-        }
+        card_on_deck[player] = new_value;
     }
 
 
