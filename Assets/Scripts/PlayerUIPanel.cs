@@ -18,8 +18,6 @@ public class PlayerUIPanel : UIBase
 
     public override void OnDestroy()
     {
-        base.OnDestroy();
-
         btnPass.onClick.RemoveAllListeners();
     }
 

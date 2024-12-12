@@ -2,12 +2,15 @@ using UnityEngine;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using UnityEngine.Rendering.Universal;
+using NUnit.Framework;
+using System.Collections;
 
 public class Player3D : MonoBehaviour
 {
     public Quaternion direction;
     public bool operate_play = false;
     private int card_cnt = 0;
+    List<Transform> playing_cards = new List<Transform>();
 
     void Start()
     {
@@ -16,6 +19,7 @@ public class Player3D : MonoBehaviour
             gameObject.AddComponent<Computer>();
         }
     }
+
 
     public void SetDirection(Quaternion direction)
     {
@@ -70,6 +74,65 @@ public class Player3D : MonoBehaviour
         }
     }
 
+    public void OrgPlayingCards()// 用于显示playing_cards变量中的牌
+    {
+        if (playing_cards.Count <= 0 || gameObject.name.Equals("Player"))
+        {
+            return;
+        }
+        float dx = 0.03f;
+        Vector3 card_location = new Vector3(0f, 0.1f, -10f);
+        switch (gameObject.name)
+        {
+            case "PlayerRight":
+                card_location = new Vector3(-0.750f, 0.450f, 0.4f);
+                break;
+            case "PlayerBack":
+                card_location = new Vector3(0f, 0.600f, 0.4f);
+                break;
+            case "PlayerLeft":
+                card_location = new Vector3(0.750f, 0.450f, 0.4f);
+                break;
+        }
+        Quaternion card_rotation = Quaternion.Euler(-20f, 0f, 0f);
+        card_location.x -= (playing_cards.Count - 1) * dx / 2;
+        foreach (Transform child in playing_cards)
+        {
+            Card3D card_script = child.GetComponent<Card3D>();
+            if (card_script == null)
+            {
+                continue;
+            }
+            child.position = card_location;
+            child.rotation = card_rotation;
+            card_location.x += dx;
+            card_location.z -= 0.0001f;
+        }
+    }
+
+    public void ResetPlayingCards()// 用于重置playing_cards变量，并销毁其中的克隆牌
+    {
+        for (int i = 0; i < playing_cards.Count; i++)
+        {
+            Destroy(playing_cards[i].gameObject);
+        }
+        playing_cards = new List<Transform>();
+    }
+
+    public void ResetHands()// 用于在新的一局开始时重置玩家在上局持有过的牌
+    {
+        List<Transform> lst = new List<Transform>();
+        foreach (Transform child in transform)
+        {
+            lst.Add(child);
+        }
+        for (int i = 0; i < lst.Count; i++)
+        {
+            Destroy(lst[i].gameObject);
+        }
+        card_cnt = 0;
+    }
+
     private bool PlayCardAction(Transform child)
     {
         Card3D card_script = child.GetComponent<Card3D>();
@@ -82,48 +145,17 @@ public class Player3D : MonoBehaviour
             child.rotation = direction * Quaternion.Euler(-90f, -angle, 0f);
             child.position = new Vector3(Mathf.Clamp(child.position.x, -0.87f, 0.87f), GetComponentInParent<CardSet3D>().card_ontable_height, Mathf.Clamp(child.position.z, -0.87f, 0.87f));
             GetComponentInParent<CardSet3D>().card_ontable_height += 0.0001f;
+            Transform temp = Instantiate(child, new Vector3(0, 0, -20), Quaternion.identity);
+            temp.GetComponent<Card3D>().state = Card3D.CardState.CloneOnShowing;
+            playing_cards.Add(temp);//playing_cards在一张牌打出时获得它的复制
             return true;
         }
         return false;
     }
 
-    private void NextTrun()
-    {
-        GetComponentInParent<CardSet3D>().whos_turn++;
-        switch (GetComponentInParent<CardSet3D>().whos_turn)
-        {
-            case 0:
-                GetComponentInParent<CardSet3D>().UpdateCardOnDeck("", "Player");
-                Debug.Log("Player's turn!");
-                break;
-            case 1:
-                GetComponentInParent<CardSet3D>().UpdateCardOnDeck("", "PlayerRight");
-                Debug.Log("PlayerRight's turn!");
-                break;
-            case 2:
-                GetComponentInParent<CardSet3D>().UpdateCardOnDeck("", "PlayerBack");
-                Debug.Log("PlayerBack's turn!");
-                break;
-            case 3:
-                GetComponentInParent<CardSet3D>().UpdateCardOnDeck("", "PlayerLeft");
-                Debug.Log("PlayerLeft's turn!");
-                break;
-            default:
-                GetComponentInParent<CardSet3D>().whos_turn = 0;
-                GetComponentInParent<CardSet3D>().UpdateCardOnDeck("", "Player");
-                Debug.Log("Player's turn!");
-                GetComponentInParent<CardSet3D>().playerUIPanel.setPanelActive(true);
-                foreach (string v in GetComponentInParent<CardSet3D>().card_on_deck.Values)
-                {
-                    Debug.Log(v);
-                }
-                break;
-        }
-    }
 
     private void PlayCards()
     {
-        int card_cnt_before = card_cnt;
         if ((gameObject.name == "Player" && GetComponentInParent<CardSet3D>().whos_turn != 0) ||
             (gameObject.name == "PlayerRight" && GetComponentInParent<CardSet3D>().whos_turn != 1) ||
             (gameObject.name == "PlayerBack" && GetComponentInParent<CardSet3D>().whos_turn != 2) ||
@@ -131,9 +163,11 @@ public class Player3D : MonoBehaviour
         {
             return;
         }
+
+        int card_cnt_before = card_cnt;
         if (card_cnt <= 0)
         {
-            NextTrun();
+            GetComponentInParent<CardSet3D>().NextTrun();
             return;
         }
         if (gameObject.name == "Player")
@@ -165,73 +199,81 @@ public class Player3D : MonoBehaviour
             output = gameObject.GetComponent<Computer>().findPlayableCards(GetComponentInParent<CardSet3D>());
 
             if (!output.Equals("")) 
-        {
-                int[] output_split_int = new int[3];
-            string[] output_split = output.Split('-');
-            for (int i = 0; i < output_split.Length; i++)
             {
-                output_split_int[i] = int.Parse(output_split[i]);
-            }
-            switch (output_split_int[0]) 
-            {
-                case 1:
-                    UpdateCardStatus(output_split_int[1]);
-                    break;
-                case 2:
-                    for (int i = 0; i < 2; i++) 
+                string[] output_split = output.Split('-');
+                int[] output_split_int = new int[output_split.Length];
+                for (int i = 0; i < output_split.Length; i++)
+                {
+                    try
                     {
+                        output_split_int[i] = int.Parse(output_split[i]);
+                    }
+                    catch (System.Exception)
+                    {
+                        throw;
+                    }
+                    
+                }
+                switch (output_split_int[0]) 
+                {
+                    case 1:
                         UpdateCardStatus(output_split_int[1]);
-                    }
-                    break;
-                case 3:
-                    for (int i = 0; i < 3; i++)
-                    {
-                        UpdateCardStatus(output_split_int[1]);
-                    }
-                    break;
-                case 4:
-                    for (int i = 0; i < 5; i++)
-                    {
-                        UpdateCardStatus(output_split_int[1]+i);
-                    }
-                    break;
-                case 5:
-                    for (int i = 0; i < 3; i++)
-                    {
-                        UpdateCardStatus(output_split_int[1]);
-                    }
-                    for (int i = 0; i < 2; i++)
-                    {
-                        UpdateCardStatus(output_split_int[2]);
-                    }
-                    break;
-                case 6:
-                    for (int i = 0; i < 3; i++)
-                    {
-                        for (int j = 0; j < 2; i++)
+                        break;
+                    case 2:
+                        for (int i = 0; i < 2; i++) 
                         {
-                            UpdateCardStatus(output_split_int[1] + i);
+                            UpdateCardStatus(output_split_int[1]);
                         }
-                    }
-                    break;
-                case 7:
-                    for (int i = 0; i < 2; i++)
-                    {
-                        for (int j = 0; j < 3; i++)
+                        break;
+                    case 3:
+                        for (int i = 0; i < 3; i++)
+                       {
+                            UpdateCardStatus(output_split_int[1]);
+                        }
+                        break;
+                    case 4:
+                       for (int i = 0; i < 5; i++)
                         {
-                            UpdateCardStatus(output_split_int[1] + i);
+                            UpdateCardStatus(output_split_int[1]+i);
                         }
-                    }
-                    break;
-                case 8:
-                    for (int i = 0; i < output_split_int[1]; i++)
-                    {
-                        UpdateCardStatus(output_split_int[2]);
-                    }
-                    break;
+                        break;
+                    case 5:
+                        for (int i = 0; i < 3; i++)
+                        {
+                            UpdateCardStatus(output_split_int[1]);
+                        }
+                        for (int i = 0; i < 2; i++)
+                        {
+                            UpdateCardStatus(output_split_int[2]);
+                        }
+                        break;
+                    case 6:
+                        for (int i = 0; i < 3; i++)
+                        {
+                            for (int j = 0; j < 2; i++)
+                            {
+                                UpdateCardStatus(output_split_int[1] + i);
+                            }
+                        }
+                        break;
+                    case 7:
+                        for (int i = 0; i < 2; i++)
+                        {
+                            for (int j = 0; j < 3; j++)
+                            {
+                                UpdateCardStatus(output_split_int[1] + i);
+                            }
+                        }
+                        break;
+                    case 8:
+                        for (int i = 0; i < output_split_int[1]; i++)
+                        {
+                            UpdateCardStatus(output_split_int[2]);
+                        }
+                        break;
                 
+                }
             }
-        }
             GetComponentInParent<CardSet3D>().UpdateCardOnDeck(output, gameObject.name);
 
         }
@@ -242,7 +284,8 @@ public class Player3D : MonoBehaviour
             GetComponentInParent<CardSet3D>().player_rank[gameObject.name] = GetComponentInParent<CardSet3D>().n_finished_player;
         }
         OrgHands();
-        NextTrun();
+        OrgPlayingCards();
+        GetComponentInParent<CardSet3D>().NextTrun();
     }
 
     public string CheckHandType()

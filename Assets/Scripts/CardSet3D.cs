@@ -2,11 +2,14 @@ using UnityEngine;
 using System;
 using System.Collections.Generic;
 using Unity.VisualScripting;
+using System.Collections;
 
 public class CardSet3D : MonoBehaviour //控制牌局进行的全局类
 {
     private AssetBundle asset_bundle;
     private List<string> full_cardname;
+    private bool resetting = false;
+
     public PlayerUIPanel playerUIPanel;
     public float card_ontable_height = 0;
     public int whos_turn = 0;
@@ -51,27 +54,63 @@ public class CardSet3D : MonoBehaviour //控制牌局进行的全局类
         transform.Find("PlayerLeft").GetComponent<Player3D>().SetDirection(Quaternion.Euler(0f, 90f, 0f));
         transform.Find("PlayerRight").GetComponent<Player3D>().SetDirection(Quaternion.Euler(0f, -90f, 0f));
         transform.Find("PlayerBack").GetComponent<Player3D>().SetDirection(Quaternion.Euler(0f, 180f, 0f));
-
-        DistributeCards();
-
-        transform.Find("PlayerLeft").GetComponent<Player3D>().GetComponent<Computer>().BuildHandCards(transform.Find("PlayerLeft").GetComponent<Player3D>());
-        transform.Find("PlayerRight").GetComponent<Player3D>().GetComponent<Computer>().BuildHandCards(transform.Find("PlayerRight").GetComponent<Player3D>());
-        transform.Find("PlayerBack").GetComponent<Player3D>().GetComponent<Computer>().BuildHandCards(transform.Find("PlayerBack").GetComponent<Player3D>());
-
         GameObject temp = GameObject.Find("PlayerUIPanel");
         playerUIPanel = temp.GetComponent<PlayerUIPanel>();
+
+        BuildCards();
+
+    }
+
+    IEnumerator WaitForNextFrame()//等待一帧，用于等待gameobject彻底销毁
+    {
+        yield return new WaitForEndOfFrame();
     }
 
     void Update()
     {
-        if (n_finished_player >= 4)
+        if (n_finished_player >= 3)
         {
-            DistributeCards();
-
-            transform.Find("PlayerLeft").GetComponent<Player3D>().GetComponent<Computer>().BuildHandCards(transform.Find("PlayerLeft").GetComponent<Player3D>());
-            transform.Find("PlayerRight").GetComponent<Player3D>().GetComponent<Computer>().BuildHandCards(transform.Find("PlayerRight").GetComponent<Player3D>());
-            transform.Find("PlayerBack").GetComponent<Player3D>().GetComponent<Computer>().BuildHandCards(transform.Find("PlayerBack").GetComponent<Player3D>());
+            resetting = true;
+            ReSetPlayers();
+            StartCoroutine(WaitForNextFrame());
         }
+    }
+    private void LateUpdate()
+    {
+        if (resetting)
+        {
+            BuildCards();
+            resetting = false;
+        }
+    }
+
+    private void ReSetPlayers()
+    {
+        Player3D Player = transform.Find("Player").GetComponent<Player3D>();
+        Player3D PlayerLeft = transform.Find("PlayerLeft").GetComponent<Player3D>();
+        Player3D PlayerRight = transform.Find("PlayerRight").GetComponent<Player3D>();
+        Player3D PlayerBack = transform.Find("PlayerBack").GetComponent<Player3D>();
+        UpdateCardOnDeck("", "Player");
+        UpdateCardOnDeck("", "PlayerLeft");
+        UpdateCardOnDeck("", "PlayerRight");
+        UpdateCardOnDeck("", "PlayerBack");
+        Player.ResetPlayingCards();
+        Player.ResetHands();
+        PlayerLeft.ResetPlayingCards();
+        PlayerLeft.ResetHands();
+        PlayerRight.ResetPlayingCards();
+        PlayerRight.ResetHands();
+        PlayerBack.ResetPlayingCards();
+        PlayerBack.ResetHands();
+    }
+
+    private void BuildCards()
+    {
+        DistributeCards();
+
+        transform.Find("PlayerLeft").GetComponent<Player3D>().GetComponent<Computer>().BuildHandCards();
+        transform.Find("PlayerRight").GetComponent<Player3D>().GetComponent<Computer>().BuildHandCards();
+        transform.Find("PlayerBack").GetComponent<Player3D>().GetComponent<Computer>().BuildHandCards();
     }
 
     void DistributeCards() //采用了以单牌的大小排序逐张随机分配的方法，保证发好牌时就是排序好的形式
@@ -122,8 +161,40 @@ public class CardSet3D : MonoBehaviour //控制牌局进行的全局类
             player_rank[child_Players[i].name] = 0;
         }
         n_finished_player = 0;
-        whos_turn = 0;
+        whos_turn = -1;
+        NextTrun();
     }
+
+    public void NextTrun()
+    {
+        whos_turn++;
+        switch (whos_turn)
+        {
+            case 1:
+                UpdateCardOnDeck("", "PlayerRight");
+                transform.Find("PlayerRight").GetComponent<Player3D>().ResetPlayingCards();
+                break;
+            case 2:
+                UpdateCardOnDeck("", "PlayerBack");
+                transform.Find("PlayerBack").GetComponent<Player3D>().ResetPlayingCards();
+                break;
+            case 3:
+                UpdateCardOnDeck("", "PlayerLeft");
+                transform.Find("PlayerLeft").GetComponent<Player3D>().ResetPlayingCards();
+                break;
+            default:
+                whos_turn = 0;
+                UpdateCardOnDeck("", "Player");
+                transform.Find("Player").GetComponent<Player3D>().ResetPlayingCards();
+                playerUIPanel.setPanelActive(true);
+                foreach (string item in card_on_deck.Values) 
+                {
+                    Debug.Log(item);
+                }
+                break;
+        }
+    }
+
 
     int getRandom(int[] random_set, System.Random random, int curLen) 
     {
@@ -135,7 +206,6 @@ public class CardSet3D : MonoBehaviour //控制牌局进行的全局类
 
     public string GetBestCardOnDeck() 
     {
-        string best_key = null;
         string best_value = "";
         foreach (var item in card_on_deck)
         {
@@ -145,14 +215,12 @@ public class CardSet3D : MonoBehaviour //控制牌局进行的全局类
             }
             if (best_value.Equals(""))//初始化
             {
-                best_key = item.Key;
                 best_value = item.Value;
             }
             else
             {
                 if (CardSet3D.CompareCard(item.Value, best_value) == 1)
                 {
-                    best_key = item.Key;
                     best_value = item.Value;
                 }
             }

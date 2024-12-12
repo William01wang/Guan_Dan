@@ -8,19 +8,19 @@ using UnityEngine.InputSystem;
 //目前简单人机的思路是在游戏开始时把拥有手牌遍历一次，生成手牌库。之后每次出牌只在可打牌型中选择可打的最小牌。遍历手牌库时生成一个(牌点，数量)的字典，代表
 public class Computer : MonoBehaviour
 {
-    Dictionary<int, int> handCards;//手牌
+    Dictionary<int, int> handCards = new Dictionary<int, int>();//手牌
 
-    void Start()
+    public void BuildHandCards() //生成手牌
     {
-    }
-    public void BuildHandCards(Player3D player) //生成手牌
-    {
+        Player3D player = GetComponentInParent<Player3D>();
+        handCards.Clear();
         handCards = new Dictionary<int, int>();
         for (int i = 1; i <= 17; i++) //初始化
         {
             handCards.Add(i, 0);
         }
         List<string> cards = new List<string>();
+        Debug.Log(player.transform.childCount);
         foreach (Transform child in player.transform)//获取所有手牌，从小到大排序
         {
             Card3D card_script = child.GetComponent<Card3D>();
@@ -29,33 +29,33 @@ public class Computer : MonoBehaviour
         for (int i = 0; i < cards.Count; i++) //对选中牌的花色和大小进行标准化
         {
             string[] cur = cards[i].Split("-");
-            if (cur[1] == "Jack")
+            if (cur[1].Equals("Jack"))
             {
-                handCards[11]++;
+                handCards[11] = handCards[11] + 1;
             }
-            else if (cur[1] == "Queen")
+            else if (cur[1].Equals("Queen"))
             {
-                handCards[12]++;
+                handCards[12] = handCards[12] + 1;
             }
-            else if (cur[1] == "King")
+            else if (cur[1].Equals("King"))
             {
-                handCards[13]++;
+                handCards[13] = handCards[13] + 1;
             }
-            else if (cur[1] == "Ace")
+            else if (cur[1].Equals("Ace"))
             {
-                handCards[14]++;
+                handCards[14] = handCards[14] + 1;
             }
-            else if (cur[1] == "LittleJoker")
+            else if (cur[1].Equals("LittleJoker"))
             {
-                handCards[16]++;
+                handCards[16] = handCards[16] + 1;
             }
-            else if (cur[1] == "BigJoker")
+            else if (cur[1].Equals("BigJoker"))
             {
-                handCards[17]++;
+                handCards[17] = handCards[17] + 1;
             }
             else
             {
-                handCards[int.Parse(cur[1])]++;
+                handCards[int.Parse(cur[1])] = handCards[int.Parse(cur[1])] + 1;
             }
         }
     }
@@ -66,27 +66,27 @@ public class Computer : MonoBehaviour
         string best_value = cardSet.GetBestCardOnDeck();
         if (best_value.Equals("")) //若没人出过牌，直接打最小的牌型
         {
-            if (result == "") 
+            if (result.Equals(""))
             {
                 result = Search_Triple_With_Row(0);
             }
-            if (result == "")
+            if (result.Equals(""))
             {
                 result = Search_Three_pairs(0);
             }
-            if (result == "")
+            if (result.Equals(""))
             {
                 result = Search_Triple_Pairs(0);
             }
-            if (result == "")
+            if (result.Equals(""))
             {
                 result = Search_Straight(0);
             }
-            if (result == "")
+            if (result.Equals(""))
             {
                 result = Search_Double(0);
             }
-            if (result == "")
+            if (result.Equals(""))
             {
                 result = Search_Single(0);
             }
@@ -145,11 +145,11 @@ public class Computer : MonoBehaviour
 
     string Search_Single(int point) //查找可出最小单牌
     {
-        for (int i = point+1; i <= handCards.Count; i++)
+        for (int i = point+1; i <= 17; i++)
         {
             if (handCards[i] >= 1) 
             {
-                handCards[i]--;
+                handCards[i] = handCards[i] - 1;
                 return $"1-{i}";
             }
         }
@@ -158,11 +158,11 @@ public class Computer : MonoBehaviour
 
     string Search_Double(int point) //查找可出最小对子
     {
-        for (int i = point + 1; i <= handCards.Count; i++)
+        for (int i = point + 1; i <= 17; i++)
         {
             if (handCards[i] >= 2)
             {
-                handCards[i] -= 2;
+                handCards[i] = handCards[i] - 2;
                 return $"2-{i}";
             }
         }
@@ -171,11 +171,11 @@ public class Computer : MonoBehaviour
 
     string Search_Triple(int point) //查找可出最小三连张
     {
-        for (int i = point + 1; i <= handCards.Count; i++)
+        for (int i = point + 1; i <= 15; i++)
         {
             if (handCards[i] >= 3)
             {
-                handCards[i] -= 3;
+                handCards[i] = handCards[i] - 3;
                 return $"3-{i}";
             }
         }
@@ -185,7 +185,7 @@ public class Computer : MonoBehaviour
     string Search_Straight(int point) //查找可出最小顺子
     {
         int curLen = 0;
-        for (int i = point + 1; i <= handCards.Count; i++)
+        for (int i = point + 1; i <= 15; i++)
         {
             if (handCards[i] > 0)
             {
@@ -199,7 +199,7 @@ public class Computer : MonoBehaviour
             {
                 for (int j = i; j >i - 5; j--) 
                 {
-                    handCards[j]--;
+                    handCards[j] = handCards[j] - 1;
                 }
                 return $"4-{i-4}";
             }
@@ -211,7 +211,7 @@ public class Computer : MonoBehaviour
     {
         int triple_i = -1;
         int pair_i = -1;
-        for (int i = point+1; i <= handCards.Count; i++)
+        for (int i = point+1; i <= 15; i++)
         {
             if (triple_i == -1 && handCards[i] >= 3)
             {
@@ -238,15 +238,15 @@ public class Computer : MonoBehaviour
         {
             return "";
         }
-        handCards[triple_i] -= 3;
-        handCards[pair_i] -= 2;
+        handCards[triple_i] = handCards[triple_i] - 3;
+        handCards[pair_i] = handCards[pair_i] - 2;
         return $"5-{triple_i}-{pair_i}";
     }
 
     string Search_Triple_Pairs(int point) //查找可出最小三连对
     {
         int curLen = 0;
-        for (int i = point + 1; i <= handCards.Count; i++)
+        for (int i = point + 1; i <= 15; i++)
         {
             if (handCards[i] >= 2)
             {
@@ -260,7 +260,7 @@ public class Computer : MonoBehaviour
             {
                 for (int j = i; j > i - 3; j--)
                 {
-                    handCards[j]-=2;
+                    handCards[j] = handCards[j] - 2;
                 }
                 return $"6-{i - 2}";
             }
@@ -271,7 +271,7 @@ public class Computer : MonoBehaviour
     string Search_Triple_With_Row(int point) //查找可出最小三同连张
     {
         int curLen = 0;
-        for (int i = point + 1; i <= handCards.Count; i++)
+        for (int i = point + 1; i <= 15; i++)
         {
             if (handCards[i] >= 3)
             {
@@ -285,7 +285,7 @@ public class Computer : MonoBehaviour
             {
                 for (int j = i; j > i - 2; j--)
                 {
-                    handCards[j] -= 3;
+                    handCards[j] = handCards[j] - 3;
                 }
                 return $"7-{i - 1}";
             }
@@ -298,13 +298,14 @@ public class Computer : MonoBehaviour
     {
         string result = "";
         int result_i = -1;
+
         for (int i = 1; i <= 15; i++)
         {
             if (handCards[i] >= len) 
             {
                 if (i > point) //长度相同点数更大，一定是最优解
                 {
-                    handCards[i] -= len;
+                    handCards[i] = handCards[i] - len;
                     return $"8-{len}-{i}";
                 }
                 else if (handCards[i] > len) //点数不更大但长度更大，如果没找到上面的情况，那么第一个这种情况是最优解
@@ -328,7 +329,7 @@ public class Computer : MonoBehaviour
         }
         else
         {
-            handCards[result_i] -= len+1;
+            handCards[result_i] = handCards[result_i] - (len + 1);
         }
         return result;
     }

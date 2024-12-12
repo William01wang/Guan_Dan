@@ -11,7 +11,8 @@ public class Card3D : MonoBehaviour
         OnHand,
         Selected,
         OnTable,
-        OnOthers
+        OnOthers,
+        CloneOnShowing
     }
     public CardState state;
     private Renderer object_renderer;
@@ -28,6 +29,10 @@ public class Card3D : MonoBehaviour
 
     void Update()
     {
+        if (state == CardState.CloneOnShowing)//用于展示的克隆牌不参与UPDATE
+        {
+            return;
+        }
         SelectUpdate();
         OnTableUpdate(Time.deltaTime);
     }
