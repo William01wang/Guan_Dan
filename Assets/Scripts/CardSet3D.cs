@@ -9,17 +9,19 @@ public class CardSet3D : MonoBehaviour //控制牌局进行的全局类
     private AssetBundle asset_bundle;
     private List<string> full_cardname;
     private bool resetting = false;
+    private bool game_end = false;
 
     public PlayerUIPanel playerUIPanel;
     public float card_ontable_height = 0;
     public int whos_turn = 0;
+    public int top_team = -1;
+    public int rank_up = 1;
+    public int cur_rank = 2;
     
-    public Dictionary<string, int> player_rank = new Dictionary<string, int>
+    public Dictionary<int, int> team_rank = new Dictionary<int, int>
         {
-            { "Player", 0 },
-            { "PlayerLeft", 0 },
-            { "PlayerRight", 0 },
-            { "PlayerBack", 0 },
+            { 0, 2 },
+            { 1, 2 }
         };
     public Dictionary<string, string> card_on_deck = new Dictionary<string, string>
         {
@@ -70,9 +72,21 @@ public class CardSet3D : MonoBehaviour //控制牌局进行的全局类
     {
         if (n_finished_player >= 3)
         {
-            resetting = true;
-            ReSetPlayers();
-            StartCoroutine(WaitForNextFrame());
+            SetRank();
+            CheckWin();
+            if (game_end)
+            {
+                resetting = true;
+                ReSetPlayers();
+                StartCoroutine(WaitForNextFrame());
+            }
+            else 
+            {
+                resetting = true;
+                ReSetPlayers();
+                StartCoroutine(WaitForNextFrame());
+            }
+            
         }
     }
     private void LateUpdate()
@@ -81,6 +95,25 @@ public class CardSet3D : MonoBehaviour //控制牌局进行的全局类
         {
             BuildCards();
             resetting = false;
+        }
+    }
+
+    private void SetRank()
+    {
+        team_rank[top_team] += rank_up;
+        rank_up = 1;
+        cur_rank = team_rank[top_team];
+        playerUIPanel.Rank.text = "Rank:\r\nTeam 0:\t" + team_rank[0] + "\r\nTeam 1:\t" + team_rank[1] + "\r\nCur_Rank:\t" + cur_rank_tostring();
+    }
+    private void CheckWin()//在每小局结束时检查有无队伍胜利
+    {
+        for (int i = 0; i < 2; i++) 
+        {
+            if (team_rank[i] >= 15) 
+            {
+                Debug.Log("team " + i + " win!");//胜利的提示或许需要与大厅链接，先不写.也可以在update处链接
+                game_end = true;
+            }
         }
     }
 
@@ -158,7 +191,6 @@ public class CardSet3D : MonoBehaviour //控制牌局进行的全局类
         for (int i = 0; i < child_Players.Length; i++) 
         {
             child_Players[i].GetComponent<Player3D>().OrgHands();
-            player_rank[child_Players[i].name] = 0;
         }
         n_finished_player = 0;
         whos_turn = -1;
@@ -219,7 +251,7 @@ public class CardSet3D : MonoBehaviour //控制牌局进行的全局类
             }
             else
             {
-                if (CardSet3D.CompareCard(item.Value, best_value) == 1)
+                if (CompareCard(item.Value, best_value) == 1)
                 {
                     best_value = item.Value;
                 }
@@ -234,9 +266,9 @@ public class CardSet3D : MonoBehaviour //控制牌局进行的全局类
     }
 
 
-    public static int CompareCard(string card1, string card2) 
+    public int CompareCard(string card1, string card2) 
     {
-        //一个静态public函数，用于牌局中所有类需要的牌大小比较
+        //一个public函数，用于牌局中所有类需要的牌大小比较
         //返回值: 1:card1更大 0:card2更大或相同! -1:不可比较
         if (card1.Equals(""))
         {
@@ -257,6 +289,37 @@ public class CardSet3D : MonoBehaviour //控制牌局进行的全局类
         for (int i = 0; i < v2_string.Length; i++)
         {
             v2[i] = int.Parse(v2_string[i]);
+        }
+        for (int i = 1; i <= 3; i++) 
+        {
+            if (v1[0] == i) 
+            {
+                if (v1[1] == cur_rank) 
+                {
+                    v1[1] = 15;
+                }
+            }
+            if (v2[0] == i)
+            {
+                if (v2[1] == cur_rank)
+                {
+                    v2[1] = 15;
+                }
+            }
+        }
+        if (v1[0] == 8)
+        {
+            if (v1[2] == cur_rank)
+            {
+                v1[2] = 15;
+            }
+        }
+        if (v2[0] == 8)
+        {
+            if (v2[2] == cur_rank)
+            {
+                v2[2] = 15;
+            }
         }
         if (v1[0] > v2[0]) //v1牌型编号更大(不同牌型)
         {
@@ -306,6 +369,30 @@ public class CardSet3D : MonoBehaviour //控制牌局进行的全局类
                 return v1[1] > v2[1] ? 1 : 0;
             }
         }
-    } 
+    }
+
+    string cur_rank_tostring() 
+    {
+        if (cur_rank==11)
+        {
+            return "Jack";
+        }
+        else if (cur_rank == 12)
+        {
+            return "Queen";
+        }
+        else if (cur_rank == 13)
+        {
+            return "King";
+        }
+        else if (cur_rank == 14)
+        {
+            return "Ace";
+        }
+        else
+        {
+            return cur_rank.ToString();
+        }
+    }
 }
 

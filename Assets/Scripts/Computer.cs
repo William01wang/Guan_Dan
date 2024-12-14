@@ -60,7 +60,7 @@ public class Computer : MonoBehaviour
         }
     }
 
-    public string findPlayableCards(CardSet3D cardSet) //根据本轮牌桌上的牌，寻找可打出的最小牌型
+    public string findPlayableCards(CardSet3D cardSet, int cur_rank) //根据本轮牌桌上的牌，寻找可打出的最小牌型
     {
         string result = "";
         string best_value = cardSet.GetBestCardOnDeck();
@@ -82,13 +82,18 @@ public class Computer : MonoBehaviour
             {
                 result = Search_Straight(0);
             }
+            
+            
             if (result.Equals(""))
             {
-                result = Search_Double(0);
+                if (Random.value > 0.4) 
+                {
+                    result = Search_Double(0, cur_rank);
+                }
             }
             if (result.Equals(""))
             {
-                result = Search_Single(0);
+                result = Search_Single(0, cur_rank);
             }
         }
             else
@@ -101,24 +106,24 @@ public class Computer : MonoBehaviour
                 }
                 if (best_value_int[0] == 8) //牌桌上最大为炸弹
                 {
-                    return Search_Bomb(best_value_int[1], best_value_int[2]);
+                    return Search_Bomb(best_value_int[1], best_value_int[2], cur_rank);
                 }
                 else if (best_value_int[0] == 9) //牌桌上最大为同花顺
                 {
-                    return Search_Bomb(6, 0);
+                    return Search_Bomb(6, 0, cur_rank);
                 }
                 else //牌桌上最大为普通牌型
                 {
                     switch (best_value_int[0]) //查找同牌型
                     {
                         case 1:
-                            result = Search_Single(best_value_int[1]);
+                            result = Search_Single(best_value_int[1], cur_rank);
                             break;
                         case 2:
-                            result = Search_Double(best_value_int[1]);
+                            result = Search_Double(best_value_int[1], cur_rank);
                             break;
                         case 3:
-                            result = Search_Triple(best_value_int[1]);
+                            result = Search_Triple(best_value_int[1], cur_rank);
                             break;
                         case 4:
                             result = Search_Straight(best_value_int[1]);
@@ -135,7 +140,7 @@ public class Computer : MonoBehaviour
                     }
                     if (result.Equals("")) //若同牌型要不起，找炸弹
                     {
-                        result = Search_Bomb(4, 0);
+                        result = Search_Bomb(4, 0, cur_rank);
                     }
                    
                 }
@@ -143,40 +148,88 @@ public class Computer : MonoBehaviour
         return result;
     }
 
-    string Search_Single(int point) //查找可出最小单牌
+    string Search_Single(int point, int cur_rank) //查找可出最小单牌
     {
+        if (point == cur_rank) 
+        {
+            point = 15;
+        }
         for (int i = point+1; i <= 17; i++)
         {
+            if (i == cur_rank)
+            {
+                continue;
+            }
             if (handCards[i] >= 1) 
             {
                 handCards[i] = handCards[i] - 1;
                 return $"1-{i}";
             }
         }
+        if (point < 15) 
+        {
+            if (handCards[cur_rank] >= 1)
+            {
+                handCards[cur_rank] = handCards[cur_rank] - 1;
+                return $"1-{cur_rank}";
+            }
+        }
         return "";
     }
 
-    string Search_Double(int point) //查找可出最小对子
+    string Search_Double(int point, int cur_rank) //查找可出最小对子
     {
+        if (point == cur_rank)
+        {
+            point = 15;
+        }
         for (int i = point + 1; i <= 17; i++)
         {
+            if (i == cur_rank)
+            {
+                continue;
+            }
             if (handCards[i] >= 2)
             {
                 handCards[i] = handCards[i] - 2;
                 return $"2-{i}";
             }
         }
+        if (point < 15)
+        {
+            if (handCards[cur_rank] >= 2)
+            {
+                handCards[cur_rank] = handCards[cur_rank] - 2;
+                return $"2-{cur_rank}";
+            }
+        }
         return "";
     }
 
-    string Search_Triple(int point) //查找可出最小三连张
+    string Search_Triple(int point, int cur_rank) //查找可出最小三连张
     {
-        for (int i = point + 1; i <= 15; i++)
+        if (point == cur_rank)
         {
+            point = 15;
+        }
+        for (int i = point + 1; i <= 14; i++)
+        {
+            if (i == cur_rank) 
+            {
+                continue;
+            }
             if (handCards[i] >= 3)
             {
                 handCards[i] = handCards[i] - 3;
                 return $"3-{i}";
+            }
+        }
+        if (point < 15)
+        {
+            if (handCards[cur_rank] >= 3)
+            {
+                handCards[cur_rank] = handCards[cur_rank] - 3;
+                return $"3-{cur_rank}";
             }
         }
         return "";
@@ -185,7 +238,7 @@ public class Computer : MonoBehaviour
     string Search_Straight(int point) //查找可出最小顺子
     {
         int curLen = 0;
-        for (int i = point + 1; i <= 15; i++)
+        for (int i = point + 1; i <= 14; i++)
         {
             if (handCards[i] > 0)
             {
@@ -211,7 +264,7 @@ public class Computer : MonoBehaviour
     {
         int triple_i = -1;
         int pair_i = -1;
-        for (int i = point+1; i <= 15; i++)
+        for (int i = point+1; i <= 14; i++)
         {
             if (triple_i == -1 && handCards[i] >= 3)
             {
@@ -246,7 +299,7 @@ public class Computer : MonoBehaviour
     string Search_Triple_Pairs(int point) //查找可出最小三连对
     {
         int curLen = 0;
-        for (int i = point + 1; i <= 15; i++)
+        for (int i = point + 1; i <= 14; i++)
         {
             if (handCards[i] >= 2)
             {
@@ -271,7 +324,7 @@ public class Computer : MonoBehaviour
     string Search_Triple_With_Row(int point) //查找可出最小三同连张
     {
         int curLen = 0;
-        for (int i = point + 1; i <= 15; i++)
+        for (int i = point + 1; i <= 14; i++)
         {
             if (handCards[i] >= 3)
             {
@@ -294,13 +347,21 @@ public class Computer : MonoBehaviour
     }
 
 
-    string Search_Bomb(int len, int point) //查找可出最小炸弹
+    string Search_Bomb(int len, int point, int cur_rank) //查找可出最小炸弹
     {
+        if (point == cur_rank) 
+        {
+            point = 15;
+        }
         string result = "";
         int result_i = -1;
 
-        for (int i = 1; i <= 15; i++)
+        for (int i = 1; i <= 14; i++)
         {
+            if (i == cur_rank)
+            {
+                continue;
+            }
             if (handCards[i] >= len) 
             {
                 if (i > point) //长度相同点数更大，一定是最优解
@@ -315,6 +376,22 @@ public class Computer : MonoBehaviour
                         result_i = i;
                         result = $"8-{len+1}-{i}";
                     }
+                }
+            }
+        }
+        if (point < 15)
+        {
+            if (handCards[cur_rank] == len)
+            {
+                handCards[cur_rank] = handCards[cur_rank] - len;
+                return $"8-{len}-{cur_rank}";
+            }
+            else if (handCards[cur_rank] > len)
+            {
+                if (result.Equals(""))
+                {
+                    result_i = cur_rank;
+                    result = $"8-{len + 1}-{cur_rank}";
                 }
             }
         }

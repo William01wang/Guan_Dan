@@ -1,14 +1,17 @@
 using UnityEngine;
+using System.Collections;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using UnityEngine.Rendering.Universal;
 using NUnit.Framework;
-using System.Collections;
+using System.Linq;
+using System.Runtime.InteropServices;
 
 public class Player3D : MonoBehaviour
 {
     public Quaternion direction;
     public bool operate_play = false;
+    public int team = -1;
     private int card_cnt = 0;
     List<Transform> playing_cards = new List<Transform>();
 
@@ -17,6 +20,21 @@ public class Player3D : MonoBehaviour
         if (gameObject.name != "Player") 
         {
             gameObject.AddComponent<Computer>();
+        }
+        switch (gameObject.name)
+        {
+            case "Player":
+                team = 0;
+                break;
+            case "PlayerRight":
+                team = 1;
+                break;
+            case "PlayerBack":
+                team = 0;
+                break;
+            case "PlayerLeft":
+                team = 1;
+                break;
         }
     }
 
@@ -115,7 +133,9 @@ public class Player3D : MonoBehaviour
         for (int i = 0; i < playing_cards.Count; i++)
         {
             Destroy(playing_cards[i].gameObject);
+            
         }
+        playing_cards.Clear();
         playing_cards = new List<Transform>();
     }
 
@@ -196,7 +216,7 @@ public class Player3D : MonoBehaviour
         else
         {
             string output = "";
-            output = gameObject.GetComponent<Computer>().findPlayableCards(GetComponentInParent<CardSet3D>());
+            output = gameObject.GetComponent<Computer>().findPlayableCards(GetComponentInParent<CardSet3D>(), GetComponentInParent<CardSet3D>().cur_rank);
 
             if (!output.Equals("")) 
             {
@@ -204,15 +224,7 @@ public class Player3D : MonoBehaviour
                 int[] output_split_int = new int[output_split.Length];
                 for (int i = 0; i < output_split.Length; i++)
                 {
-                    try
-                    {
-                        output_split_int[i] = int.Parse(output_split[i]);
-                    }
-                    catch (System.Exception)
-                    {
-                        throw;
-                    }
-                    
+                    output_split_int[i] = int.Parse(output_split[i]);
                 }
                 switch (output_split_int[0]) 
                 {
@@ -250,7 +262,7 @@ public class Player3D : MonoBehaviour
                     case 6:
                         for (int i = 0; i < 3; i++)
                         {
-                            for (int j = 0; j < 2; i++)
+                            for (int j = 0; j < 2; j++)
                             {
                                 UpdateCardStatus(output_split_int[1] + i);
                             }
@@ -281,7 +293,15 @@ public class Player3D : MonoBehaviour
         if (card_cnt <= 0)
         {
             GetComponentInParent<CardSet3D>().n_finished_player++;
-            GetComponentInParent<CardSet3D>().player_rank[gameObject.name] = GetComponentInParent<CardSet3D>().n_finished_player;
+            if (GetComponentInParent<CardSet3D>().n_finished_player == 1)
+            {
+                GetComponentInParent<CardSet3D>().top_team = team;
+            }
+            else if (GetComponentInParent<CardSet3D>().n_finished_player > 1 && GetComponentInParent<CardSet3D>().top_team == team) 
+            {
+                GetComponentInParent<CardSet3D>().rank_up += (4 - GetComponentInParent<CardSet3D>().n_finished_player);
+            }
+
         }
         OrgHands();
         OrgPlayingCards();
@@ -290,6 +310,7 @@ public class Player3D : MonoBehaviour
 
     public string CheckHandType()
     {
+        int cur_rank = GetComponentInParent<CardSet3D>().cur_rank;
         List<string> cardsOnPlaying = new List<string>();
         foreach (Transform child in transform)//获取所有被选中的牌，牌在cardsOnplaying从小到大排序
         {
@@ -302,74 +323,182 @@ public class Player3D : MonoBehaviour
         //cardsOnPlaying.ForEach(x => Debug.Log(x));  //用于debug查看试图打出的牌
         string[] suits = new string[cardsOnPlaying.Count];
         int[] points = new int[cardsOnPlaying.Count];
+        int num_of_normal = 0;
+        int num_of_heart_rank = 0;
+        int heart_rank_used = 0;
         for (int i = 0; i < cardsOnPlaying.Count; i++) //对选中牌的花色和大小进行标准化
         {
             string[] cur = cardsOnPlaying[i].Split("-");
-            suits[i] = cur[0];
+            suits[num_of_normal] = cur[0];
             if (cur[1] == "Jack")
             {
-                points[i] = 11;
+                points[num_of_normal] = 11;
             }
             else if (cur[1] == "Queen")
             {
-                points[i] = 12;
+                points[num_of_normal] = 12;
             }
             else if (cur[1] == "King")
             {
-                points[i] = 13;
+                points[num_of_normal] = 13;
             }
             else if (cur[1] == "Ace")
             {
-                points[i] = 14;
+                points[num_of_normal] = 14;
             }
             else if (cur[1] == "LittleJoker")
             {
-                points[i] = 16;
+                points[num_of_normal] = 16;
             }
             else if (cur[1] == "BigJoker")
             {
-                points[i] = 17;
+                points[num_of_normal] = 17;
             }
             else
             {
-                points[i] = int.Parse(cur[1]);
+                points[num_of_normal] = int.Parse(cur[1]);
+            }
+            if (suits[num_of_normal].Equals("Heart") && points[num_of_normal] == cur_rank) 
+            {
+                num_of_heart_rank++;
+            }
+            else
+            {
+                num_of_normal++;
             }
         }
+
         //开始判断牌型
         if (cardsOnPlaying.Count == 1) //单牌
         {
+            if (num_of_normal == 0) 
+            {
+                return $"1-{cur_rank}";
+            }
             return $"1-{points[0]}";
         }
         else if (cardsOnPlaying.Count == 2) //对子
         {
-            if (points[0] == points[1])
+            if (num_of_normal == 0)
+            {
+                return $"1-{cur_rank}";
+            }
+            else if (num_of_normal == 1)
             {
                 return $"2-{points[0]}";
             }
+            else 
+            {
+                if (points[0] == points[1]) 
+                {
+                    return $"2-{points[0]}";
+                }
+            }
+
         }
         else if (cardsOnPlaying.Count == 3) //三同张
         {
-            if (points[0] == points[1] && points[0] == points[2])
+            switch (num_of_normal) 
             {
-                return $"3-{points[0]}";
+                case 0:
+                    return $"3-{cur_rank}";
+                case 1:
+                    return $"3-{points[0]}";
+                case 2:
+                    if (points[0] == points[1])
+                    {
+                        return $"3-{points[0]}";
+                    }
+                    break;
+                case 3:
+                    if (points[0] == points[1] && points[0] == points[2])
+                    {
+                        return $"3-{points[0]}";
+                    }
+                    break;
             }
+            
         }
         else if (cardsOnPlaying.Count == 5) //顺子、同花顺和三带对
         {
             bool flush = true;
             bool Straight = true;
-            for (int i = 0; i < cardsOnPlaying.Count - 1; i++) //判断是否同花
+            for (int i = 0; i < num_of_normal - 1; i++) //判断是否同花
             {
                 if (!suits[i].Equals(suits[i + 1]))
                 {
                     flush = false; break;
                 }
             }
-            for (int i = 0; i < cardsOnPlaying.Count - 1; i++)//判断是否顺子
+            for (int i = 0; i < num_of_normal - 1; i++)//判断是否顺子
             {
                 if (points[i] != points[i + 1] - 1)
                 {
-                    Straight = false; break;
+                    for (int j = 0; j < points[i + 1] - points[i] - 1; j++) 
+                    {
+                        if (num_of_heart_rank > heart_rank_used)
+                        {
+                            heart_rank_used++;
+                        }
+                        else 
+                        {
+                            heart_rank_used = 0;
+                            Straight = false; break;
+                        }
+                    }
+                    if (!Straight) 
+                    {
+                        break;
+                    }
+                }
+            }
+            if (!Straight && points[num_of_normal - 1] == 14) //单独考虑A2345情况
+            {
+                Straight = true;
+                if (1 != points[0] - 1) 
+                {
+                    for (int j = 0; j < points[0] - 2; j++)
+                    {
+                        if (num_of_heart_rank > heart_rank_used)
+                        {
+                            heart_rank_used++;
+                        }
+                        else
+                        {
+                            heart_rank_used = 0;
+                            Straight = false; break;
+                        }
+                    }
+                }
+                for (int i = 0; i < num_of_normal - 2; i++)
+                {
+                    if (!Straight)
+                    {
+                        break;
+                    }
+                    if (points[i] != points[i + 1] - 1)
+                    {
+                        for (int j = 0; j < points[i + 1] - points[i] - 1; j++)
+                        {
+                            if (num_of_heart_rank > heart_rank_used)
+                            {
+                                heart_rank_used++;
+                            }
+                            else
+                            {
+                                heart_rank_used = 0;
+                                Straight = false; break;
+                            }
+                        }
+                    }
+                }
+                if (flush && Straight)
+                {
+                    return $"9-{1}";
+                }
+                else if (Straight)
+                {
+                    return $"4-{1}";
                 }
             }
             if (flush && Straight)
@@ -381,7 +510,7 @@ public class Player3D : MonoBehaviour
                 return $"4-{points[0]}";
             }
             int point1 = points[0], point2 = -1, count1 = 1, count2 = 0;
-            for (int i = 1; i < cardsOnPlaying.Count; i++) //判断是否三带对
+            for (int i = 1; i < num_of_normal; i++) //判断是否三带对
             {
                 if (points[i] == point1)
                 {
@@ -401,9 +530,10 @@ public class Player3D : MonoBehaviour
                     break;
                 }
             }
-            if (count1 + count2 == 5)
+            if (count1 + count2 == num_of_normal)
             {
-                if (count1 == 3)
+                if (count1 > 3 || count2 > 3){}
+                else if (count1 == 3)
                 {
                     return $"5-{point1}-{point2}";
                 }
@@ -416,7 +546,7 @@ public class Player3D : MonoBehaviour
         else if (cardsOnPlaying.Count == 6) //三连对和三同连张
         {
             int point1 = points[0], point2 = -1, point3 = -1, count1 = 1, count2 = 0, count3 = 0;
-            for (int i = 1; i < cardsOnPlaying.Count; i++)
+            for (int i = 1; i < num_of_normal; i++)
             {
                 if (points[i] == point1)
                 {
@@ -445,17 +575,46 @@ public class Player3D : MonoBehaviour
                     break;
                 }
             }
-            if ((count1 == 3) && (count2 == 3)) //判断是否三同连张
+            if (count1 + count2 + count3 == num_of_normal) 
             {
-                return $"7-{point1}";
-            }
-            else if ((count1 == 2) && (count2 == 2) && (count3 == 2)) //判断是否三连对
-            {
-                return $"6-{point1}";
+                if (count3 == 0)
+                {
+                    if (count1 > 3 || count2 > 3 || (point2 - point1 > 1 && point2 - point1 != 12)) { }
+                    else if (count1 == 3 || count2 == 3)
+                    {
+                        return $"7-{point1}";
+                    }
+                    else //这种情况下，只可能是2-2普通配两张赖子，使得可能出现三连对和三同连张两种情况
+                    {
+                        string best_value = GetComponentInParent<CardSet3D>().GetBestCardOnDeck();
+                        if (best_value == "") //本轮牌桌上没牌，则两种牌型应当可以自由选择一种，但是还需要在UI上实现，很麻烦，且这种情况比较极端，所以直接视作打出相对更稀有的三同连张
+                        {
+                            return $"7-{point1}";
+                        }
+                        string[] best_value_split = GetComponentInParent<CardSet3D>().GetBestCardOnDeck().Split('-');
+                        if (int.Parse(best_value_split[0]) == 6) //牌桌上有连对，则只能是跟连对
+                        {
+                            return $"6-{point1}";
+                        }
+                        else //牌桌上是三同连对，则只能是跟三同连对，如果两种都不是，反正会在后面的检测被拦截，所以返回哪种都无所谓
+                        {
+                            return $"7-{point1}";
+                        }
+                    }
+                }
+                else 
+                {
+                    if (count1 > 2 || count2 > 2 || count3 > 2 || point2 - point1 > 1 || (point3 - point2 > 1 && point3 - point1 != 12)) {}
+                    else 
+                    {
+                        return $"6-{point1}";
+                    }
+                }
             }
         }
+
         bool Bomb = true;
-        for (int i = 0; i < cardsOnPlaying.Count - 1; i++) //判断炸弹
+        for (int i = 0; i < num_of_normal - 1; i++) //判断炸弹
         {
             if (points[i] != points[i + 1])
             {
@@ -467,7 +626,7 @@ public class Player3D : MonoBehaviour
             return $"8-{cardsOnPlaying.Count}-{points[0]}";
         }
 
-        if (cardsOnPlaying.Count == 4) //判断四大天王
+        if (cardsOnPlaying.Count == 4 && num_of_heart_rank == 0) //判断四大天王
         {
             Bomb = true;
             for (int i = 0; i < cardsOnPlaying.Count - 1; i++)

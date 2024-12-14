@@ -125,7 +125,7 @@ public class Card3D : MonoBehaviour
                     Player3D player = GetComponentInParent<Player3D>();
                     string handType = player.CheckHandType();
                     if (!handType.Equals("")) {//牌型检测函数
-                        if (CardSet3D.CompareCard(handType, GetComponentInParent<CardSet3D>().GetBestCardOnDeck()) == 1) //检测打出的牌能否大过上家
+                        if (GetComponentInParent<CardSet3D>().CompareCard(handType, GetComponentInParent<CardSet3D>().GetBestCardOnDeck()) == 1) //检测打出的牌能否大过上家
                         {
                             GetComponentInParent<CardSet3D>().UpdateCardOnDeck(handType, "Player");
                             player.operate_play = true;
