@@ -1,40 +1,35 @@
-
-using NUnit.Framework;
-using System;
+ï»¿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Net.Sockets;
-using UnityEditor.Experimental.GraphView;
 using UnityEngine;
 
-
 /// <summary>
-/// ¿Í»§¶ËsocketµÄ·â×°
+/// å®¢æˆ·ç«¯socketçš„å°è£…
 /// </summary>
-public class ClientPeer 
+public class ClientPeer
 {
     private Socket socket;
 
     private string ip;
-
     private int port;
 
     /// <summary>
-    /// ¹¹ÔìÁ¬½Ó¶ÔÏó
+    /// æ„é€ è¿æ¥å¯¹è±¡
     /// </summary>
-    /// <param name="ip">ipµØÖ·</param>
-    /// <param name="port">¶Ë¿ÚºÅ</param>
-    public ClientPeer(string ip, int port) 
+    /// <param name="ip">IPåœ°å€</param>
+    /// <param name="port">ç«¯å£å·</param>
+    public ClientPeer(string ip, int port)
     {
         try
         {
             socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
             this.ip = ip;
-            this.port = port; 
+            this.port = port;
         }
         catch (System.Exception e)
         {
-            Debug.Log(e.Message);
-            throw;
+            Debug.LogError(e.Message);
         }
     }
 
@@ -42,104 +37,107 @@ public class ClientPeer
     {
         try
         {
-            //Á¬½Ó·şÎñÆ÷
             socket.Connect(ip, port);
-            Debug.Log("Á¬½Ó·şÎñÆ÷³É¹¦£¡");
+            Debug.Log("è¿æ¥æœåŠ¡å™¨æˆåŠŸï¼");
 
             startReceive();
         }
         catch (Exception e)
         {
-            Debug.Log(e.Message);
-            throw;
+            Debug.LogError(e.Message);
         }
     }
 
-    #region ½ÓÊÕÊı¾İ
-    //½ÓÊÕµÄÊı¾İ»º³åÇø
-    private byte[] receiveBuffer =new byte[1024];
+
+    #region æ¥å—æ•°æ®
+
+    //æ¥å—çš„æ•°æ®ç¼“å†²åŒº
+    private byte[] receiveBuffer = new byte[1024];
 
     /// <summary>
-    /// Ò»µ©½ÓÊÕµ½Êı¾İ£¬¾Í´æµ½»º´æÇøÀïÃæÂğ
+    /// ä¸€æ—¦æ¥æ”¶åˆ°æ•°æ® å°±å­˜åˆ°ç¼“å­˜åŒºé‡Œé¢
     /// </summary>
     private List<byte> dataCache = new List<byte>();
 
     private bool isProcessReceive = false;
 
-    public Queue<SocketMsg> socketMsgQueue =new Queue<SocketMsg>();
+    public Queue<SocketMsg> SocketMsgQueue = new Queue<SocketMsg>();
 
     /// <summary>
-    /// ¿ªÊ¼Òì²½½ÓÊÜÊı¾İ
+    /// å¼€å§‹å¼‚æ­¥æ¥å—æ•°æ®
     /// </summary>
-    private void startReceive() 
+    private void startReceive()
     {
-        if (socket == null && socket.Connected) {
-            Debug.Log("Ã»ÓĞÁ¬½Ó³É¹¦£¬ÎŞ·¨·¢ËÍÊı¾İ");
+        if (socket == null && socket.Connected == false)
+        {
+            Debug.LogError("æ²¡æœ‰è¿æ¥æˆåŠŸï¼Œæ— æ³•å‘é€æ•°æ®");
             return;
         }
 
-
-        socket.BeginReceive(receiveBuffer,0,1024,SocketFlags.None,receiveCallBack,socket);
+        socket.BeginReceive(receiveBuffer, 0, 1024, SocketFlags.None, receiveCallBack, socket);
     }
 
     /// <summary>
-    /// ÊÕµ½ÏûÏ¢µÄ»Øµ÷
+    /// æ”¶åˆ°æ¶ˆæ¯çš„å›è°ƒ
     /// </summary>
-    /// <param name="ar"></param>
-    private void receiveCallBack(IAsyncResult ar) 
+    private void receiveCallBack(IAsyncResult ar)
     {
         try
         {
             int length = socket.EndReceive(ar);
             byte[] tmpByteArray = new byte[length];
             Buffer.BlockCopy(receiveBuffer, 0, tmpByteArray, 0, length);
-            //´¦ÀíÊÕµ½µÄÊı¾İ
+
+            //å¤„ç†æ”¶åˆ°çš„æ•°æ®
             dataCache.AddRange(tmpByteArray);
-            if (isProcessReceive == false) {
+            if (isProcessReceive == false)
                 processReceive();
-            }
+
+            startReceive();
         }
-        catch (Exception e) 
+        catch (Exception e)
         {
-            Debug.Log(e.Message);
-            throw;
+            Debug.LogError(e.Message);
         }
     }
 
     /// <summary>
-    /// ´¦ÀíÊÕµ½µÄÊı¾İ
+    /// å¤„ç†æ”¶åˆ°çš„æ•°æ®
     /// </summary>
-    private void processReceive() 
+    private void processReceive()
     {
         isProcessReceive = true;
-
-        //½âÎöÊı¾İ°ü
+        //è§£ææ•°æ®åŒ…
         byte[] data = EncodeTool.DecodePacket(ref dataCache);
 
         if (data == null)
         {
-            isProcessReceive=false;
+            isProcessReceive = false;
             return;
         }
 
         SocketMsg msg = EncodeTool.DecodeMsg(data);
-        //´æ´¢ÏûÏ¢µÈ´ı´¦Àí
-        socketMsgQueue.Enqueue(msg);
+        //å­˜å‚¨æ¶ˆæ¯ ç­‰å¾…å¤„ç†
+        SocketMsgQueue.Enqueue(msg);
+        Debug.Log(msg.Value);
 
-        //Î²µİ¹é
+        //å°¾é€’å½’
         processReceive();
     }
+
     #endregion
 
-    #region ·¢ËÍÊı¾İ
+    #region å‘é€æ•°æ®
 
-    public void Send(int opCode, int subCode, object value) 
+    public void Send(int opCode, int subCode, object value)
     {
-        SocketMsg msg = new SocketMsg(opCode,subCode,value);
+        SocketMsg msg = new SocketMsg(opCode, subCode, value);
+
         Send(msg);
     }
 
-    public void Send(SocketMsg msg) {
+    public void Send(SocketMsg msg)
+    {
         byte[] data = EncodeTool.EncodeMsg(msg);
         byte[] packet = EncodeTool.EncodePacket(data);
 
@@ -150,8 +148,9 @@ public class ClientPeer
         catch (Exception e)
         {
             Debug.LogError(e.Message);
-            throw;
         }
     }
+
     #endregion
+
 }

@@ -187,7 +187,7 @@ public class Player3D : MonoBehaviour
         int card_cnt_before = card_cnt;
         if (card_cnt <= 0)
         {
-            GetComponentInParent<CardSet3D>().NextTrun();
+            GetComponentInParent<CardSet3D>().NextTurn();
             return;
         }
         if (gameObject.name == "Player")
@@ -305,7 +305,7 @@ public class Player3D : MonoBehaviour
         }
         OrgHands();
         OrgPlayingCards();
-        GetComponentInParent<CardSet3D>().NextTrun();
+        GetComponentInParent<CardSet3D>().NextTurn();
     }
 
     public string CheckHandType()

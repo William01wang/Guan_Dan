@@ -11,5 +11,6 @@ public class UIEvent
 {
     public const int START_PANEL_ACTIVE = 0;//设置开始面板的显示
     public const int REGIST_PANEL_ACTIVE = 1;//设置注册面板的显示
-    public const int PLAYERUI_PANEL_ACTIVE = 2;//设置注册面板的显示
+
+    public const int PROMT_MSG = int.MaxValue;
 }

@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
@@ -29,7 +28,6 @@ public class PlayPanel : UIBase
 
     private void startClick()
     {
-        Console.WriteLine("测试1");
         Dispatch(AreaCode.UI, UIEvent.START_PANEL_ACTIVE, true);
         //GameObject.Find("").gameObject.SetActive(true);
     }

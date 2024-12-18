@@ -1,9 +1,9 @@
-﻿using System.Collections;
+﻿using Protocol.Code;
+using Protocol.Dto;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
-using Protocol.Dto;
-using Protocol.Code;
 
 public class StartPanel : UIBase
 {
@@ -30,6 +30,9 @@ public class StartPanel : UIBase
     private InputField inputAccount;
     private InputField inputPassword;
 
+    private PromptMsg promptMsg;
+    private SocketMsg socketMsg;
+
     // Use this for initialization
     void Start()
     {
@@ -40,6 +43,9 @@ public class StartPanel : UIBase
 
         btnLogin.onClick.AddListener(loginClick);
         btnClose.onClick.AddListener(closeClick);
+
+        promptMsg = new PromptMsg();
+        socketMsg = new SocketMsg();
 
         //面板需要默认隐藏
         setPanelActive(false);
@@ -53,28 +59,34 @@ public class StartPanel : UIBase
         btnClose.onClick.RemoveListener(closeClick);
     }
 
-    AccountDto dto = new AccountDto();
-    SocketMsg socketMsg = new SocketMsg();
-
     /// <summary>
     /// 登录按钮的点击事件处理
     /// </summary>
     private void loginClick()
     {
-        if (string.IsNullOrEmpty(inputAccount.text))
+        if (string.IsNullOrEmpty(inputAccount.text)) {
+            promptMsg.Change("登陆的用户名不能为空！", Color.red);
+            Dispatch(AreaCode.UI, UIEvent.PROMT_MSG, promptMsg);
             return;
-        if (string.IsNullOrEmpty(inputPassword.text)
-            || inputPassword.text.Length < 4
-            || inputPassword.text.Length > 16)
+        }
+            
+        if (string.IsNullOrEmpty(inputPassword.text))
+        {
+            promptMsg.Change("登陆的密码不能为空！", Color.red);
+            Dispatch(AreaCode.UI, UIEvent.PROMT_MSG, promptMsg);
             return;
+        }
 
-        dto.Account = inputAccount.text;
-        dto.Password = inputPassword.text;
+        if (inputPassword.text.Length < 4 || inputPassword.text.Length > 16)
+        {
+            promptMsg.Change("登陆的密码长度不合法，应该在4-16个字符之内", Color.red);
+            Dispatch(AreaCode.UI, UIEvent.PROMT_MSG, promptMsg);
+            return;
+        }
 
-        socketMsg.OpCode = OpCode.ACCOUNT;
-        socketMsg.SubCode = AccountCode.LOGIN;
-        socketMsg.Value = dto;
 
+        AccountDto dto = new AccountDto(inputAccount.text, inputPassword.text);
+        socketMsg.Change(OpCode.ACCOUNT, AccountCode.LOGIN, dto);
         Dispatch(AreaCode.NET, 0, socketMsg);
     }
 

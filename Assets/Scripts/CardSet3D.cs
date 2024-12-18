@@ -6,6 +6,7 @@ using System.Collections;
 
 public class CardSet3D : MonoBehaviour //控制牌局进行的全局类
 {
+    private Coroutine cur_timer;
     private AssetBundle asset_bundle;
     private List<string> full_cardname;
     private bool resetting = false;
@@ -59,6 +60,7 @@ public class CardSet3D : MonoBehaviour //控制牌局进行的全局类
         GameObject temp = GameObject.Find("PlayerUIPanel");
         playerUIPanel = temp.GetComponent<PlayerUIPanel>();
 
+
         BuildCards();
 
     }
@@ -76,6 +78,7 @@ public class CardSet3D : MonoBehaviour //控制牌局进行的全局类
             CheckWin();
             if (game_end)
             {
+                //插入游戏结束弹窗
                 resetting = true;
                 ReSetPlayers();
                 StartCoroutine(WaitForNextFrame());
@@ -88,6 +91,7 @@ public class CardSet3D : MonoBehaviour //控制牌局进行的全局类
             }
             
         }
+        
     }
     private void LateUpdate()
     {
@@ -194,10 +198,10 @@ public class CardSet3D : MonoBehaviour //控制牌局进行的全局类
         }
         n_finished_player = 0;
         whos_turn = -1;
-        NextTrun();
+        NextTurn();
     }
 
-    public void NextTrun()
+    public void NextTurn()
     {
         whos_turn++;
         switch (whos_turn)
@@ -205,20 +209,52 @@ public class CardSet3D : MonoBehaviour //控制牌局进行的全局类
             case 1:
                 UpdateCardOnDeck("", "PlayerRight");
                 transform.Find("PlayerRight").GetComponent<Player3D>().ResetPlayingCards();
+                playerUIPanel.setTimerP1Active(false);
+                if (cur_timer != null)
+                {
+                    StopCoroutine(cur_timer);
+                    cur_timer = null;
+                }
+                playerUIPanel.setTimerP2Active(true);
+                cur_timer = StartCoroutine(TimeFunc(playerUIPanel.TimerP2));
                 break;
             case 2:
                 UpdateCardOnDeck("", "PlayerBack");
                 transform.Find("PlayerBack").GetComponent<Player3D>().ResetPlayingCards();
+                playerUIPanel.setTimerP2Active(false);
+                if (cur_timer != null)
+                {
+                    StopCoroutine(cur_timer);
+                    cur_timer = null;
+                }
+                playerUIPanel.setTimerP3Active(true);
+                cur_timer = StartCoroutine(TimeFunc(playerUIPanel.TimerP3));
                 break;
             case 3:
                 UpdateCardOnDeck("", "PlayerLeft");
                 transform.Find("PlayerLeft").GetComponent<Player3D>().ResetPlayingCards();
+                playerUIPanel.setTimerP3Active(false);
+                if (cur_timer != null)
+                {
+                    StopCoroutine(cur_timer);
+                    cur_timer = null;
+                }
+                playerUIPanel.setTimerP4Active(true);
+                cur_timer = StartCoroutine(TimeFunc(playerUIPanel.TimerP4));
                 break;
             default:
                 whos_turn = 0;
                 UpdateCardOnDeck("", "Player");
                 transform.Find("Player").GetComponent<Player3D>().ResetPlayingCards();
-                playerUIPanel.setPanelActive(true);
+                playerUIPanel.setBtnActive(true);
+                playerUIPanel.setTimerP4Active(false);
+                if (cur_timer != null)
+                {
+                    StopCoroutine(cur_timer);
+                    cur_timer = null;
+                }
+                playerUIPanel.setTimerP1Active(true);
+                cur_timer = StartCoroutine(TimeFunc(playerUIPanel.TimerP1));
                 foreach (string item in card_on_deck.Values) 
                 {
                     Debug.Log(item);
@@ -226,7 +262,19 @@ public class CardSet3D : MonoBehaviour //控制牌局进行的全局类
                 break;
         }
     }
-
+    private IEnumerator TimeFunc(UnityEngine.UI.Text timer)
+    {
+        int TimeCount = 30;
+        timer.text = TimeCount.ToString();
+        do
+        {
+            yield return new WaitForSeconds(1);//在每帧update之后进行等待一秒
+            TimeCount -= 1;
+            timer.text = TimeCount.ToString();
+        } while (TimeCount > 0);
+        transform.Find("Player").GetComponent<Player3D>().operate_play = false;
+        NextTurn();
+    }
 
     int getRandom(int[] random_set, System.Random random, int curLen) 
     {
