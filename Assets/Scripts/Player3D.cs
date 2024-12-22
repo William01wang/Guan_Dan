@@ -13,6 +13,7 @@ public class Player3D : MonoBehaviour
     public bool operate_play = false;
     public int team = -1;
     private int card_cnt = 0;
+    private bool less_than_10 = false;
     List<Transform> playing_cards = new List<Transform>();
 
     void Start()
@@ -210,6 +211,7 @@ public class Player3D : MonoBehaviour
                         card_cnt--;
                     }
                 }
+                GetComponent<AudioSource>().PlayOneShot(GetComponent<AudioSource>().clip);//播放打牌音效
             }
             
         }
@@ -285,6 +287,7 @@ public class Player3D : MonoBehaviour
                         break;
                 
                 }
+                GetComponent<AudioSource>().PlayOneShot(GetComponent<AudioSource>().clip);//播放打牌音效
             }
             GetComponentInParent<CardSet3D>().UpdateCardOnDeck(output, gameObject.name);
 
@@ -297,11 +300,26 @@ public class Player3D : MonoBehaviour
             {
                 GetComponentInParent<CardSet3D>().top_team = team;
             }
-            else if (GetComponentInParent<CardSet3D>().n_finished_player > 1 && GetComponentInParent<CardSet3D>().top_team == team) 
+            else if (GetComponentInParent<CardSet3D>().n_finished_player > 1 && GetComponentInParent<CardSet3D>().top_team == team)
             {
                 GetComponentInParent<CardSet3D>().rank_up += (4 - GetComponentInParent<CardSet3D>().n_finished_player);
             }
 
+        }
+        else if (!less_than_10 && card_cnt <= 10) 
+        {
+            switch (gameObject.name)
+            {
+                case "PlayerRight":
+                    GetComponentInParent<CardSet3D>().playerUIPanel.transform.Find("LessThan10P2").gameObject.SetActive(true);
+                    break;
+                case "PlayerBack":
+                    GetComponentInParent<CardSet3D>().playerUIPanel.transform.Find("LessThan10P3").gameObject.SetActive(true);
+                    break;
+                case "PlayerLeft":
+                    GetComponentInParent<CardSet3D>().playerUIPanel.transform.Find("LessThan10P4").gameObject.SetActive(true);
+                    break;
+            }
         }
         OrgHands();
         OrgPlayingCards();

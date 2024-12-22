@@ -131,6 +131,9 @@ public class CardSet3D : MonoBehaviour //控制牌局进行的全局类
         UpdateCardOnDeck("", "PlayerLeft");
         UpdateCardOnDeck("", "PlayerRight");
         UpdateCardOnDeck("", "PlayerBack");
+        playerUIPanel.transform.Find("LessThan10P2").gameObject.SetActive(false);
+        playerUIPanel.transform.Find("LessThan10P3").gameObject.SetActive(false);
+        playerUIPanel.transform.Find("LessThan10P4").gameObject.SetActive(false);
         Player.ResetPlayingCards();
         Player.ResetHands();
         PlayerLeft.ResetPlayingCards();
@@ -192,6 +195,7 @@ public class CardSet3D : MonoBehaviour //控制牌局进行的全局类
             card_count--;
             child_Players[index].GetComponent<Player3D>().AddCard(asset_bundle.LoadAsset<GameObject>($"Card_x{king_name}"), $"x-{king_name}");
         }
+        GetComponent<AudioSource>().PlayOneShot(GetComponent<AudioSource>().clip);//播放发牌音效
         for (int i = 0; i < child_Players.Length; i++) 
         {
             child_Players[i].GetComponent<Player3D>().OrgHands();
