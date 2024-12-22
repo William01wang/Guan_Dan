@@ -11,13 +11,17 @@ public class CardSet3D : MonoBehaviour //控制牌局进行的全局类
     private List<string> full_cardname;
     private bool resetting = false;
     private bool game_end = false;
+    private bool game_start = false;
+    private bool game_restartting = false;
 
     public PlayerUIPanel playerUIPanel;
-    public float card_ontable_height = 0;
-    public int whos_turn = 0;
-    public int top_team = -1;
-    public int rank_up = 1;
-    public int cur_rank = 2;
+    public GameStartPanel gameStartPanel;
+    public GameEndPanel gameEndPanel;
+    public float card_ontable_height;
+    public int whos_turn;
+    public int top_team;
+    public int rank_up;
+    public int cur_rank;
     
     public Dictionary<int, int> team_rank = new Dictionary<int, int>
         {
@@ -36,6 +40,18 @@ public class CardSet3D : MonoBehaviour //控制牌局进行的全局类
 
     void Start()
     {
+        //变量初始化
+        card_ontable_height = 0;
+        whos_turn = -1;
+        top_team = -1;
+        rank_up = 1;
+        cur_rank = 2;
+
+        playerUIPanel = GameObject.Find("PlayerUIPanel").GetComponent<PlayerUIPanel>();
+        gameStartPanel = GameObject.Find("GameStartPanel").GetComponent<GameStartPanel>();
+        gameEndPanel = GameObject.Find("GameEndPanel").GetComponent<GameEndPanel>();
+        gameEndPanel.gameObject.SetActive(false);
+
         asset_bundle = AssetBundle.LoadFromFile("Assets/AssetBundles/cards");
         if (asset_bundle == null)
         {
@@ -57,12 +73,7 @@ public class CardSet3D : MonoBehaviour //控制牌局进行的全局类
         transform.Find("PlayerLeft").GetComponent<Player3D>().SetDirection(Quaternion.Euler(0f, 90f, 0f));
         transform.Find("PlayerRight").GetComponent<Player3D>().SetDirection(Quaternion.Euler(0f, -90f, 0f));
         transform.Find("PlayerBack").GetComponent<Player3D>().SetDirection(Quaternion.Euler(0f, 180f, 0f));
-        GameObject temp = GameObject.Find("PlayerUIPanel");
-        playerUIPanel = temp.GetComponent<PlayerUIPanel>();
-
-
-        BuildCards();
-
+        
     }
 
     IEnumerator WaitForNextFrame()//等待一帧，用于等待gameobject彻底销毁
@@ -72,6 +83,7 @@ public class CardSet3D : MonoBehaviour //控制牌局进行的全局类
 
     void Update()
     {
+        
         if (n_finished_player >= 3)
         {
             SetRank();
@@ -79,9 +91,13 @@ public class CardSet3D : MonoBehaviour //控制牌局进行的全局类
             if (game_end)
             {
                 //插入游戏结束弹窗
-                resetting = true;
-                ReSetPlayers();
-                StartCoroutine(WaitForNextFrame());
+                game_start = false;
+                game_end = false;
+                game_restartting = true;
+                n_finished_player = 0;
+                int diff = team_rank[top_team] - team_rank[1 - top_team];
+                gameEndPanel.txtTitle.text = "游戏结束！\r\nTeam" + top_team + " \twin!\r\n\n" + "积分变化：\r\nTeam" + top_team + ":\t+" + (diff) + "\r\nTeam" + (1-top_team) + ":\t-" + (diff);
+                gameEndPanel.gameObject.SetActive(true);
             }
             else 
             {
@@ -91,7 +107,39 @@ public class CardSet3D : MonoBehaviour //控制牌局进行的全局类
             }
             
         }
-        
+        if (!game_start) 
+        {
+            if (gameStartPanel.gameStartClicked)
+            {
+                gameStartPanel.gameStartClicked = false;
+                game_start = true;
+                resetting = true;
+                StartCoroutine(WaitForNextFrame());
+            }
+
+            else if (game_restartting) 
+            {
+                if (gameEndPanel.gameRestartClicked) 
+                {
+                    gameEndPanel.gameRestartClicked = false;
+                    //变量初始化
+                    card_ontable_height = 0;
+                    whos_turn = -1;
+                    top_team = -1;
+                    rank_up = 1;
+                    cur_rank = 2;
+                    team_rank[0] = 2;
+                    team_rank[1] = 2;
+                    playerUIPanel.Rank.text = "Rank:\r\nTeam 0:\t2\r\nTeam 1:\t2\r\nCur_Rank:\t2";
+
+                    game_start = true;
+                    resetting = true;
+                    ReSetPlayers();
+                    StartCoroutine(WaitForNextFrame());
+                }
+                
+            }
+        }
     }
     private void LateUpdate()
     {
@@ -115,7 +163,7 @@ public class CardSet3D : MonoBehaviour //控制牌局进行的全局类
         {
             if (team_rank[i] >= 15) 
             {
-                Debug.Log("team " + i + " win!");//胜利的提示或许需要与大厅链接，先不写.也可以在update处链接
+                top_team = i;
                 game_end = true;
             }
         }
@@ -144,7 +192,7 @@ public class CardSet3D : MonoBehaviour //控制牌局进行的全局类
         PlayerBack.ResetHands();
     }
 
-    private void BuildCards()
+    public void BuildCards()
     {
         DistributeCards();
 

@@ -450,24 +450,29 @@ public class Player3D : MonoBehaviour
             }
             for (int i = 0; i < num_of_normal - 1; i++)//判断是否顺子
             {
-                if (points[i] != points[i + 1] - 1)
+                if (points[i] == points[i + 1] - 1) { }
+                else if (points[i] < points[i + 1] - 1)
                 {
-                    for (int j = 0; j < points[i + 1] - points[i] - 1; j++) 
+                    for (int j = 0; j < points[i + 1] - points[i] - 1; j++)
                     {
                         if (num_of_heart_rank > heart_rank_used)
                         {
                             heart_rank_used++;
                         }
-                        else 
+                        else
                         {
                             heart_rank_used = 0;
                             Straight = false; break;
                         }
                     }
-                    if (!Straight) 
+                    if (!Straight)
                     {
                         break;
                     }
+                }
+                else //这种情况是两张一样的牌，不可能组成顺子了，直接排除
+                {
+                    Straight = false; break;
                 }
             }
             if (!Straight && points[num_of_normal - 1] == 14) //单独考虑A2345情况
@@ -510,22 +515,14 @@ public class Player3D : MonoBehaviour
                         }
                     }
                 }
-                if (flush && Straight)
-                {
-                    return $"9-{1}";
-                }
-                else if (Straight)
-                {
-                    return $"4-{1}";
-                }
             }
             if (flush && Straight)
             {
-                return $"9-{points[0]}";
+                return $"9-{1}";
             }
             else if (Straight)
             {
-                return $"4-{points[0]}";
+                return $"4-{1}";
             }
             int point1 = points[0], point2 = -1, count1 = 1, count2 = 0;
             for (int i = 1; i < num_of_normal; i++) //判断是否三带对
